@@ -1,16 +1,25 @@
 import pygame
+import time
+from enum import Enum
+
+
+# pygame setup
+pygame.init()
+pygame.font.init()
 
 # Screen consts
 SCREEN_W, SCREEN_H = 1280,720
 
 # Color consts
 BLACK = 0,0,0
+WHITE = 255,255,255
 MAROON = 128, 0, 0
 RED = 255,0,0
 DARK_GREEN =  0, 100,0 
 LIGHT_GREEN =  45, 207, 70
 
 BG_COLOR = 45,207,70
+BLOCK_COLOR = DARK_GREEN
 
 # Game object consts
 
@@ -18,13 +27,15 @@ BG_COLOR = 45,207,70
 BORDER_SIZE = 30
 
 """ Represents the sizes of squares where all the game objects such as holes and obstacles """
-SQUARE_SIZE = 30
+SQUARE_SIZE = 20
 
-BALL_RADIUS = 30
+BALL_RADIUS = 15 
 BALL_COLOR = RED
 
 FRICTION = 0.1 
 MAX_VELOCITY = 750
+
+STEP_BY = 0.01
 
 # Misc
 MOUSE_BUTTON_ONE = 1
@@ -45,8 +56,8 @@ class Ball:
         # So we predict if the next position where our ball is going to be is gonna collide with something
         # We create a dummy rectangle to test our predicitions with and assign it the values our actual ball would take if we didnt check for collisions
         rect = self.rect
-        rect.x += self.velocity * self.dir.x * 0.01
-        rect.y += self.velocity * self.dir.y * 0.01
+        rect.x += self.velocity * self.dir.x * STEP_BY 
+        rect.y += self.velocity * self.dir.y * STEP_BY 
 
         for obj in objects:
             # Now, now, theres 4 cases.
@@ -63,7 +74,6 @@ class Ball:
             obj_rect = obj.rect.copy()
             
             if not rect.colliderect(obj_rect): continue
-
 
             dx = rect.centerx - obj_rect.centerx
             dy = rect.centery - obj_rect.centery
@@ -89,14 +99,13 @@ class Ball:
             self.velocity -= FRICTION * -1 if self.velocity < 0 else 1
         else:
             self.velocity = 0
+    def is_moving(self):
+        return self.velocity != 0
     
     """ Calculates the force (with its direction) when initial and final position of the mouse are given. This is what we use when we drag and release the mouse to shoot the ball """
     def calc_force(self,initial_pos,final_pos):
         initial_pos = pygame.math.Vector2(initial_pos)
         final_pos = pygame.math.Vector2(final_pos)
-
-        #direction = (initial_pos - final_pos).normalize()
-        #force_magnitude = (initial_pos - final_pos).magnitude()
 
         # In our game, force and velocity mean the same thing ok (just simplyifes things)
         vel = min((initial_pos - final_pos).magnitude(),MAX_VELOCITY)
@@ -113,7 +122,89 @@ class StaticBlock:
         self.rect = pygame.Rect(x,y,w,h)
         
     def draw(self,screen):
-        pygame.draw.rect(screen,MAROON,self.rect)
+        pygame.draw.rect(screen,BLOCK_COLOR,self.rect)
+
+class LevelState(Enum):
+    PLAYING = 1
+    WON_ANIM = 2
+    WON  = 3
+
+class Level:
+    def __init__(self,start,end,objs):
+        self.ball_start = start
+        self.ball = Ball(start[0],start[1])
+        self.ball_end = end
+        self.objects = objs
+
+        self.state = LevelState.PLAYING
+        # This stores the initial and final/current position of the mouse when it was first clicked at the start of every shot
+        self.mouse_initial_pos = None
+        self.mouse_final_pos = None
+
+        self.num_strokes = 0
+        self.start_time = time.time()
+
+        # text stuff (make sure you call pygame.font.init() before)
+        # default_font = pygame.font.get_default_font()
+        self.font = pygame.font.Font(None,40)
+    
+    def draw(self,screen):
+
+        self.ball.draw(screen)
+        for obj in self.objects:
+            obj.draw(screen)
+        pygame.draw.circle(screen,BLACK,self.ball_end,BALL_RADIUS)
+        
+        
+
+
+        text_surface = self.font.render('Your score: {}'.format(self.num_strokes),True,WHITE)
+        screen.blit(text_surface,(BORDER_SIZE+10,30))
+
+
+
+    def update(self):
+        end_rect = pygame.Rect(self.ball_end[0],self.ball_end[1],BALL_RADIUS,BALL_RADIUS)
+
+        ball_rect = self.ball.rect
+        if ball_rect.colliderect(end_rect):
+            self.state = LevelState.WON
+            
+        match self.state:
+            case LevelState.PLAYING:
+                self.ball.update(self.objects)
+            case LevelState.WON:
+                pass
+
+    """
+        Handles Mouse Events.
+        RETURNS True if the event was used by it, else False
+    """
+    def handle_mouse_event(self,event):
+        if self.ball.is_moving(): return False
+        if self.mouse_initial_pos is not None:
+            self.mouse_final_pos = pygame.mouse.get_pos()
+        match event.type:
+            case pygame.MOUSEBUTTONDOWN:
+                btn = event.button
+                pos = event.pos
+                if btn == MOUSE_BUTTON_ONE:
+                    self.mouse_initial_pos = pos
+                return True
+            case pygame.MOUSEBUTTONUP:
+                self.num_strokes += 1
+                btn = event.button
+                pos = event.pos
+                if btn == MOUSE_BUTTON_ONE:
+                    self.mouse_final_pos = pos
+                self.ball.calc_force(self.mouse_initial_pos,self.mouse_final_pos)
+                self.mouse_initial_pos = None
+                self.mouse_final_pos = None
+                return True
+        return False
+
+
+
 
 def create_borders():
     rects = [
@@ -138,52 +229,40 @@ def draw_bg_squares(screen):
             count += 1
 
 
+LEVEL_0 = Level((SCREEN_W/2,SCREEN_H/2),(SCREEN_W/2,BORDER_SIZE+BALL_RADIUS + 5),create_borders())
+
 def main():
 
-    # pygame setup
-    pygame.init()
     screen = pygame.display.set_mode((SCREEN_W,SCREEN_H))
     clock = pygame.time.Clock()
     running = True
 
-    (mouse_initial_pos,mouse_current_pos) = (None,None)
-
-    borders = create_borders()
-    ball = Ball(SCREEN_W/2,SCREEN_H/2)
+    current_level = LEVEL_0
 
     while running:
-        # poll for events
-    # pygame.QUIT event means the user clicked X to close your window
         for event in pygame.event.get():
+            if current_level.handle_mouse_event(event): break
             match event.type:
                 case pygame.QUIT:
                     running = False
-                case pygame.MOUSEBUTTONDOWN:
-                    btn = event.button
-                    pos = event.pos
-                    if btn == MOUSE_BUTTON_ONE:
-                        mouse_initial_pos = pos
-                case pygame.MOUSEBUTTONUP:
-                    btn = event.button
-                    pos = event.pos
-                    if btn == MOUSE_BUTTON_ONE:
-                        mouse_current_pos = pos
-                    ball.calc_force(mouse_initial_pos,mouse_current_pos)
-                    mouse_initial_pos,mouse_current_pos = None,None
 
-        ball.update(borders)
+        current_level.update()
+
 
         screen.fill(BG_COLOR)
 
+        """
         # draw_bg_squares(screen)
         for border in borders:
             border.draw(screen)
         ball.draw(screen)
+        """
 
+        current_level.draw(screen)
 
         pygame.display.flip()
 
-        clock.tick(60)  # limits FPS to 60
+        clock.tick(60)  
 
     pygame.quit()
 
