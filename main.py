@@ -49,6 +49,7 @@ class Ball:
 
     def draw(self,screen):
         pygame.draw.circle(screen,BALL_COLOR,(self.rect.x,self.rect.y),BALL_RADIUS)
+
         # border
         pygame.draw.circle(screen,BLACK,(self.rect.x,self.rect.y),BALL_RADIUS,2)
 
@@ -150,17 +151,29 @@ class Level:
     
     def draw(self,screen):
 
+        mouse_pos_initial_v = pygame.math.Vector2(self.mouse_initial_pos or (self.ball.rect.x,self.ball.rect.y))
+        mouse_pos_final_v = pygame.math.Vector2(self.mouse_final_pos or (self.ball.rect.x,self.ball.rect.y))
+        dir_v =  mouse_pos_initial_v - mouse_pos_final_v
+
+
         self.ball.draw(screen)
+
+        if self.mouse_initial_pos is not None and  dir_v.magnitude != 0:
+            dir_ = dir_v.normalize()
+            rect = self.ball.rect
+            o = pygame.math.Vector2(rect.x,rect.y)
+            p1 = o - (dir_.y * BALL_RADIUS,0)
+            p2 = o + (0,dir_.x * BALL_RADIUS)
+            p3 = o + dir_ * 10
+            pygame.draw.polygon(screen,BLACK,[p1,p2,p3])
+            
         for obj in self.objects:
             obj.draw(screen)
         pygame.draw.circle(screen,BLACK,self.ball_end,BALL_RADIUS)
         
-        
-
 
         text_surface = self.font.render('Your score: {}'.format(self.num_strokes),True,WHITE)
         screen.blit(text_surface,(BORDER_SIZE+10,30))
-
 
 
     def update(self):
@@ -211,7 +224,8 @@ def create_borders():
             (0,0,SCREEN_W,BORDER_SIZE), 
             (0,SCREEN_H-BORDER_SIZE,SCREEN_W,BORDER_SIZE), 
             (0,0,BORDER_SIZE,SCREEN_H), 
-            (SCREEN_W-BORDER_SIZE,0,BORDER_SIZE,SCREEN_H)    ]
+            (SCREEN_W-BORDER_SIZE,0,BORDER_SIZE,SCREEN_H)    
+            ]
     return [ StaticBlock(v[0],v[1],v[2],v[3]) for v in rects ]
 
 def draw_bg_squares(screen):
@@ -250,13 +264,6 @@ def main():
 
 
         screen.fill(BG_COLOR)
-
-        """
-        # draw_bg_squares(screen)
-        for border in borders:
-            border.draw(screen)
-        ball.draw(screen)
-        """
 
         current_level.draw(screen)
 
