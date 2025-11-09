@@ -2,43 +2,45 @@ import pygame
 import time
 from enum import Enum
 
+from constants import *
+
 
 # pygame setup
 pygame.init()
 pygame.font.init()
 
-# Screen consts
-SCREEN_W, SCREEN_H = 1280,720
 
-# Color consts
-BLACK = 0,0,0
-WHITE = 255,255,255
-MAROON = 128, 0, 0
-RED = 255,0,0
-DARK_GREEN =  0, 100,0 
-LIGHT_GREEN =  45, 207, 70
 
-BG_COLOR = 45,207,70
-BLOCK_COLOR = DARK_GREEN
+def rect_from_dict(dict_) -> pygame.Rect:
+    rect = pygame.Rect(0,0,0,0)
+    if dict_ is None: return rect
+    rect.x = dict_.get('x') or 0
+    rect.y = dict_.get('y') or 0
+    rect.w = dict_.get('w') or 0
+    rect.h = dict_.get('h') or 0
+    return rect
 
-# Game object consts
+def rect_to_dict(rect):
+    d = {}
+    d['x'] = rect.x
+    d['y'] = rect.y
+    d['w'] = rect.w
+    d['h'] = rect.h
+    return d
 
-""" Represents the borders width (if its verticle) or its height (if its horizontal) """
-BORDER_SIZE = 30
+def vector2_from_dict(dict_) -> pygame.math.Vector2:
+    v = pygame.math.Vector2(0,0,0,0)
+    if dict_ is None: return v
+    v.x = dict_.get('x') or 0
+    v.y = dict_.get('y') or 0
+    return v
 
-""" Represents the sizes of squares where all the game objects such as holes and obstacles """
-SQUARE_SIZE = 20
+def vector2_to_dict(v):
+    d = {}
+    d['x'] = v.x
+    d['y'] = v.y
+    return d
 
-BALL_RADIUS = 15 
-BALL_COLOR = RED
-
-FRICTION = 0.1 
-MAX_VELOCITY = 750
-
-STEP_BY = 0.01
-
-# Misc
-MOUSE_BUTTON_ONE = 1
 
 class Ball:
     def __init__(self,x,y):
@@ -52,7 +54,7 @@ class Ball:
 
         # border
         pygame.draw.circle(screen,BLACK,(self.rect.x,self.rect.y),BALL_RADIUS,2)
-
+   
     def update(self,objects):
         # So we predict if the next position where our ball is going to be is gonna collide with something
         # We create a dummy rectangle to test our predicitions with and assign it the values our actual ball would take if we didnt check for collisions
@@ -72,7 +74,7 @@ class Ball:
             # that is, dir.x = -dir.x
             
 
-            obj_rect = obj.rect.copy()
+            obj_rect = obj.rect().copy()
             
             if not rect.colliderect(obj_rect): continue
 
@@ -89,8 +91,6 @@ class Ball:
 
 
         self.move()
-
-
 
     def move(self):
         self.rect.x += self.velocity  * self.dir.x
@@ -115,7 +115,18 @@ class Ball:
         dir_ = (initial_pos-final_pos).normalize()
         self.velocity = vel * 0.1
         self.dir = dir_
-         
+
+    def from_dict(self,dict_):
+        self.rect = rect_from_dict(dict_.get('rect'))
+        self.velocity = dict_.get('velocity') or 0
+        self.dir = vector2_from_dict(dict_.get('vector2'))
+
+    def to_dict(self):
+        d = {}
+        d['rect'] = rect_to_dict(self.rect)
+        d['velocity'] = self.velocity 
+        d['dir'] = vector2_to_dict(self.dir)
+        return d
 
 
 class StaticBlock:
@@ -126,7 +137,14 @@ class StaticBlock:
         pygame.draw.rect(screen,BLOCK_COLOR,self.rect)
 
     def update(self):
+        # do nothing
         pass
+
+    def from_dict(self,dict_):
+        self.rect = rect_from_dict(dict_)
+    
+    def to_dict(self):
+        return {'rect':rect_to_dict(self.rect)}
 
 class MovingBlock:
     def __init__(self,x,y,w,h,speed:float,checkpoints:[pygame.Vector2]):
@@ -149,6 +167,49 @@ class MovingBlock:
         dir_ = (pygame.math.Vector2(self.rect.x,self.rect.y) - self.checkpoints[self.current_checkpoint]).normalize()
         self.rect.x -= dir_.x * self.speed 
         self.rect.y -= dir_.y * self.speed
+
+    def from_dict(self,dict_):
+        self.rect = rect_form_dict(dict_.get('rect'))
+        self.current_checkpoint = dict_.get('current_checkpoint') or 0
+        self.speed = dict_.get('speed') or 0
+        self.checkpoints = [vector2_from_dict(d) for d in dict_.get('checkpoints') or [] ]
+    
+    def to_dict(self):
+        d = {}
+        d['rect'] = rect_to_dict(self.rect)
+        d['checkpoints'] = [vector2_to_dict(v) for v in self.checkpoints]
+        d['current_checkpoint'] = self.current_checkpoint
+        d['speed'] = self.speed
+        return d
+    
+
+class Block:
+    def __init__(self,inner=None):
+        self.inner = inner
+
+    def update(self):
+        if hasattr(self.inner,'update') or callable(self.inner,'update'):
+            self.inner.update
+
+    def draw(self,screen):
+        self.inner.draw(screen)
+
+    def from_dict(self,dict_):
+        if dict_.get('inner') is None: return
+        inner = dict_.get('inner')
+        if inner.get('checkpoints') or inner.get('current_checkpoint') or inner.get('speed'):
+            self.inner = MovingBlock(0,0,0,0,0,[]).from_dict(inner)
+        else:
+            self.inner = StaticBlock(0,0,0,0).from_dict(inner)
+
+    def to_dict(self):
+        d = {'inner':self.inner.to_dict()}
+        return d
+
+    def rect(self):
+        return self.inner.rect
+
+
 
 class LevelState(Enum):
     PLAYING = 1
@@ -252,7 +313,31 @@ class Level:
                 return True
         return False
 
+    def from_dict(self,dict_):
+        # We can also just error out if we dont find any of these
+        start = dict_.get('ball_start') or (0,0)
+        self.ball_start = start
+        print(start)
+        self.ball = Ball(start[0],start[1])
+        self.ball_end = dict_.get('ball_start') or (10,10)
+        objs = [  Block(None) for _ in range(len(dict_.get('objects') or [])) ]
+        for i,o in enumerate(dict_.get('objects') or []):
+            objs[i].from_dict(o)
+        self.objects = objs
 
+
+        # These things i dont think we'll be using
+        self.state = LevelState.PLAYING
+        self.mouse_initial_pos = None
+        self.mouse_final_pos = None
+        self.num_strokes = 0
+    def to_dict(self):
+        d = {}
+        d['ball_start'] = self.ball_start
+        d['ball_end'] = self.ball_end
+        d['ball'] = self.ball.to_dict()
+        d['objects'] = [obj.to_dict() for obj in self.objects]
+        return d
 
 
 def create_borders():
@@ -262,16 +347,7 @@ def create_borders():
             (0,0,BORDER_SIZE,SCREEN_H), 
             (SCREEN_W-BORDER_SIZE,0,BORDER_SIZE,SCREEN_H)    
             ]
-    return [ StaticBlock(v[0],v[1],v[2],v[3]) for v in rects ]
-
-def test_create_moving_block():
-    rects = [
-            (0,0), 
-            (SCREEN_W-50,0), 
-            (SCREEN_W-50,SCREEN_H-50), 
-            (0,SCREEN_H-50)    
-            ]
-    return MovingBlock(0,0,50,50,10,[pygame.Vector2(x,y) for (x,y) in rects])
+    return [ Block(StaticBlock(v[0],v[1],v[2],v[3])) for v in rects ]
 
 def draw_bg_squares(screen):
     start_x, end_x = BORDER_SIZE, SCREEN_W - BORDER_SIZE
@@ -289,15 +365,11 @@ def draw_bg_squares(screen):
 
 
 objs = create_borders()
-MB_W = 200
-objs.append(MovingBlock(50,100,MB_W,50,20,[pygame.math.Vector2(50,100),pygame.math.Vector2(SCREEN_W-50,100)]))
 LEVEL_0 = Level((SCREEN_W/2,SCREEN_H/2),(SCREEN_W/2,BORDER_SIZE+BALL_RADIUS + 5),objs)
-
 
 class GameState(Enum):
     MAIN_MENU=1
     LEVEL_SELECTOR=2
-
 
 def main():
 
