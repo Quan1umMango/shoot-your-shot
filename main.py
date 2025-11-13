@@ -72,14 +72,15 @@ class Ball:
             # Depending on the situation, we need to change the ball's velocity accordingly.
             # Example: If the ball touches an object on its right, we change the velocity (or here, the dir)'s x component to be the opposite of that
             # that is, dir.x = -dir.x
-            
 
             obj_rect = obj.rect().copy()
             
             if not rect.colliderect(obj_rect): continue
+            print("COllision at",obj_rect.x,obj_rect.y)
 
             dx = rect.centerx - obj_rect.centerx
             dy = rect.centery - obj_rect.centery
+
 
             overlap_x = (rect.width + obj_rect.width)/2 - abs(dx)
             overlap_y = (rect.height + obj_rect.height)/2 - abs(dy)
@@ -88,8 +89,9 @@ class Ball:
                 self.dir.x *= -1
             else:
                 self.dir.y *= -1
+            self.move()
 
-
+            
         self.move()
 
     def move(self):
@@ -344,8 +346,8 @@ def create_borders():
     rects = [
             (0,0,SCREEN_W,BORDER_SIZE), 
             (0,SCREEN_H-BORDER_SIZE,SCREEN_W,BORDER_SIZE), 
-            (0,0,BORDER_SIZE,SCREEN_H), 
-            (SCREEN_W-BORDER_SIZE,0,BORDER_SIZE,SCREEN_H)    
+            (0,BORDER_SIZE,BORDER_SIZE,SCREEN_H-BORDER_SIZE), 
+            (SCREEN_W-BORDER_SIZE,BORDER_SIZE,BORDER_SIZE,SCREEN_H)    
             ]
     return [ Block(StaticBlock(v[0],v[1],v[2],v[3])) for v in rects ]
 
