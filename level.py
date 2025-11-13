@@ -99,6 +99,7 @@ class Level:
                     self.mouse_initial_pos = pos
                 return True
             case pygame.MOUSEBUTTONUP:
+                if not self.mouse_initial_pos or not self.mouse_final_pos: return False
                 self.num_strokes += 1
                 btn = event.button
                 pos = event.pos
@@ -117,7 +118,6 @@ class Level:
         # We can also just error out if we dont find any of these
         start = dict_.get('ball_start') or (0,0)
         self.ball_start = start
-        print(start)
         self.ball = Ball(start[0],start[1])
         self.ball_end = dict_.get('ball_start') or (10,10)
         objs = [  Block(None) for _ in range(len(dict_.get('objects') or [])) ]

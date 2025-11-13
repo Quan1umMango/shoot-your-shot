@@ -19,7 +19,6 @@ FPS = 60
 pygame.display.set_caption("Shoot Your Shot")
 CLOCK = pygame.time.Clock()
 
-
 def create_borders():
     rects = [
             (0,0,SCREEN_W,BORDER_SIZE), 
@@ -29,30 +28,12 @@ def create_borders():
             ]
     return [ Block(StaticBlock(v[0],v[1],v[2],v[3])) for v in rects ]
 
-def draw_bg_squares(screen):
-    start_x, end_x = BORDER_SIZE, SCREEN_W - BORDER_SIZE
-    start_y, end_y = BORDER_SIZE, SCREEN_H - BORDER_SIZE
-
-    count = 0 
-
-    for y in range(start_y, end_y,SQUARE_SIZE):
-        for x in range(start_x,end_x,SQUARE_SIZE):
-            r = pygame.Rect(x,y,SQUARE_SIZE,SQUARE_SIZE)
-            #c = LIGHT_GREEN if count % 2 == 0 else DARK_GREEN
-            c = BG_COLOR 
-            pygame.draw.rect(screen,c,r)
-            count += 1
-
-
 objs = create_borders()
 LEVEL_0 = Level((SCREEN_W/2,SCREEN_H/2),(SCREEN_W/2,BORDER_SIZE+BALL_RADIUS + 5),objs)
-
-
 
 class AppState(Enum):
     Menu = 1,
     Playing = 2
-
 
 class App:
     def __init__(self):
@@ -84,14 +65,15 @@ def main_loop():
 
     while running:
         SCREEN.fill(BG_COLOR)
-        app.draw()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-                continue
+                break 
             if app.handle_input(event):
                 continue
         app.update()
+        app.draw()
+
 
         pygame.display.flip()
         CLOCK.tick(FPS)
