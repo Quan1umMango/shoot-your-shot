@@ -1,6 +1,5 @@
 import pygame
 from constants import *
-from main import SCREEN
 from ball import Ball
 from block import Block
 from enum import Enum
@@ -8,15 +7,15 @@ from enum import Enum
 import time
 
 
-class LevelState(Enum):
+class LevelState(Enum): 
     PLAYING = 1
-    WON_ANIM = 2
-    WON  = 3
+    WON = 2
 
 class Level:
-    def __init__(self,start,end,objs):
+    def __init__(self,screen,start,end,objs):
+        self.screen = screen
         self.ball_start = start
-        self.ball = Ball(start[0],start[1])
+        self.ball = Ball(self.screen,start[0],start[1])
         self.ball_end = end
         self.objects = objs
 
@@ -31,8 +30,19 @@ class Level:
         # text stuff (make sure you call pygame.font.init() before)
         # default_font = pygame.font.get_default_font()
         self.font = pygame.font.Font(None,40)
-    
+
+        self.level_end_anim = 0.0
+
+        def onlevelend():
+            self.state = LevelState.WON
+            self.ball.rect.x = self.ball_end[0]
+            self.ball.rect.y = self.ball_end[1]
+            self.level_end_anim = 0.0
+
+        self.onlevelend = onlevelend
+
     def draw(self):
+
 
         mouse_pos_initial_v = pygame.math.Vector2(self.mouse_initial_pos or (self.ball.rect.x,self.ball.rect.y))
         mouse_pos_final_v = pygame.math.Vector2(self.mouse_final_pos or (self.ball.rect.x,self.ball.rect.y))
@@ -54,18 +64,16 @@ class Level:
             p1 = o + p1_.rotate(90-theta)
             p2 = o + p2_.rotate(90-theta)
             p3 = o + p3_.rotate(90-theta) *  max(2,dir_v.magnitude()//50) 
-            pygame.draw.polygon(SCREEN,WHITE,[p1,p2,p3])
+            pygame.draw.polygon(self.screen,WHITE,[p1,p2,p3])
 
-        self.ball.draw()
-
-            
         for obj in self.objects:
             obj.draw()
-        pygame.draw.circle(SCREEN,BLACK,self.ball_end,HOLE_RADIUS)
+        pygame.draw.circle(self.screen,BLACK,self.ball_end,HOLE_RADIUS)
         
+        self.ball.draw()
 
         text_surface = self.font.render('Your score: {}'.format(self.num_strokes),True,WHITE)
-        SCREEN.blit(text_surface,(BORDER_SIZE+10,30))
+        self.screen.blit(text_surface,(BORDER_SIZE+10,30))
 
 
     def update(self):
@@ -74,6 +82,7 @@ class Level:
         ball_rect = self.ball.rect
         if ball_rect.colliderect(end_rect):
             self.state = LevelState.WON
+            self.onlevelend()
             
         match self.state:
             case LevelState.PLAYING:
@@ -81,8 +90,12 @@ class Level:
                 for obj in self.objects:
                     obj.update()
             case LevelState.WON:
-                pass
-
+                if self.ball.radius > 1.0:
+                   self.ball.radius -= 0.5 * self.ball.radius/10
+                else:
+                    # TODO: show next level screen
+                    pass
+                    
     """
         Handles Mouse Events.
         RETURNS True if the event was used by it, else False
@@ -118,13 +131,12 @@ class Level:
         # We can also just error out if we dont find any of these
         start = dict_.get('ball_start') or (0,0)
         self.ball_start = start
-        self.ball = Ball(start[0],start[1])
-        self.ball_end = dict_.get('ball_start') or (10,10)
-        objs = [  Block(None) for _ in range(len(dict_.get('objects') or [])) ]
+        self.ball = Ball(self.screen,start[0],start[1])
+        self.ball_end = dict_.get('ball_end') or (10,10)
+        objs = [  Block(self.screen,None) for _ in range(len(dict_.get('objects') or [])) ]
         for i,o in enumerate(dict_.get('objects') or []):
             objs[i].from_dict(o)
         self.objects = objs
-
 
         # These things i dont think we'll be using
         self.state = LevelState.PLAYING

@@ -68,6 +68,7 @@ def draw_geometric_overlay(surface):
     pygame.draw.polygon(overlay, (255,255,255,20), [(SCREEN_W,SCREEN_H),(SCREEN_W-260,SCREEN_H),(SCREEN_W,SCREEN_H-180)])
     surface.blit(overlay, (0,0))
 
+
 # Generic button draw that returns actual drawn rect
 def draw_button_scaled(surface, base_rect, text, hover_val, scale_override=1.0, border_width=3, border_color=BLACK):
     scale = (1.0 + 0.06 * hover_val) * scale_override

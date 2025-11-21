@@ -1,20 +1,23 @@
 import pygame
 from serde import *
 from constants import *
-from main import SCREEN
 
 class Ball:
-    def __init__(self,x,y):
+    def __init__(self,screen,x,y):
+        self.screen = screen
         self.rect = pygame.Rect(x,y,BALL_RADIUS,BALL_RADIUS)
         # You may wonder why we represent velocity as a scalar but also have a dir vector component. it just works better this way
         self.dir = pygame.math.Vector2(0,0)
         self.velocity = 0.0 
 
+
+        self.radius = BALL_RADIUS
+
     def draw(self):
-        pygame.draw.circle(SCREEN,BALL_COLOR,(self.rect.x,self.rect.y),BALL_RADIUS)
+        pygame.draw.circle(self.screen,BALL_COLOR,(self.rect.x,self.rect.y),self.radius)
 
         # border
-        pygame.draw.circle(SCREEN,BLACK,(self.rect.x,self.rect.y),BALL_RADIUS,2)
+        pygame.draw.circle(self.screen,BLACK,(self.rect.x,self.rect.y),self.radius,2)
    
     def update(self,objects):
         # So we predict if the next position where our ball is going to be is gonna collide with something

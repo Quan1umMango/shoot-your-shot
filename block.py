@@ -1,21 +1,20 @@
 import pygame
 from constants import *
-from main import SCREEN
 from serde import *
 
 class StaticBlock:
     def __init__(self,x,y,w,h):
         self.rect = pygame.Rect(x,y,w,h)
         
-    def draw(self):
-        pygame.draw.rect(SCREEN,BLOCK_COLOR,self.rect)
+    def draw(self,screen):
+        pygame.draw.rect(screen,BLOCK_COLOR,self.rect)
 
     def update(self):
         # do nothing
         pass
 
     def from_dict(self,dict_):
-        self.rect = rect_from_dict(dict_)
+        self.rect = rect_from_dict(dict_['rect'])
     
     def to_dict(self):
         return {'rect':rect_to_dict(self.rect)}
@@ -30,7 +29,7 @@ class MovingBlock:
         self.speed = speed
 
     def draw(self):
-        pygame.draw.rect(SCREEN,BLOCK_COLOR,self.rect)
+        pygame.draw.rect(self.screen,BLOCK_COLOR,self.rect)
 
     def update(self):
         to = self.checkpoints[self.current_checkpoint]
@@ -58,23 +57,26 @@ class MovingBlock:
     
 
 class Block:
-    def __init__(self,inner=None):
+    def __init__(self,screen,inner=None):
+        self.screen = screen
         self.inner = inner
 
     def update(self):
         if hasattr(self.inner,'update') or callable(self.inner,'update'):
-            self.inner.update
+            self.inner.update()
 
     def draw(self):
-        self.inner.draw()
+        self.inner.draw(self.screen)
 
     def from_dict(self,dict_):
-        if dict_.get('inner') is None: return
+        if dict_.get('inner') is None:return
         inner = dict_.get('inner')
         if inner.get('checkpoints') or inner.get('current_checkpoint') or inner.get('speed'):
-            self.inner = MovingBlock(0,0,0,0,0,[]).from_dict(inner)
+            self.inner = MovingBlock(0,0,0,0,0,[])
+            self.inner.from_dict(inner['rect'])
         else:
-            self.inner = StaticBlock(0,0,0,0).from_dict(inner)
+            self.inner = StaticBlock(0,0,0,0)
+            self.inner.from_dict(inner)
 
     def to_dict(self):
         d = {'inner':self.inner.to_dict()}

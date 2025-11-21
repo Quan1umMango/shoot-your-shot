@@ -15,7 +15,7 @@ class MenuState(Enum):
 class Menu:
     def __init__(self,onplaybuttonclicked):
         self.state = MenuState.Intro
-        self.selected_level = None
+        self.selected_level = 0
         self.settings = {"music": True, "sfx": True}
         self.ui_drawn = None
 
@@ -66,10 +66,13 @@ class Menu:
                     if play_r.collidepoint(pos):
                         if self.onplaybuttonclicked: self.onplaybuttonclicked()
                         print("PLAY pressed — start game! (selected level:", self.selected_level or 1, ")")
+                        return True
                     elif level_r.collidepoint(pos):
                         self.state = MenuState.Levels
+                        return True
                     elif settings_r.collidepoint(pos):
                         self.state = MenuState.Settings
+                        return True
 
                 elif self.state == MenuState.Settings:
                     toggles = self.ui_drawn["toggles"]
@@ -79,15 +82,18 @@ class Menu:
                     if music_box.collidepoint(pos) or music_pill.collidepoint(pos):
                         self.settings["music"] = not self.settings.get("music", True)
                         print("music ->", self.settings["music"])
+                        return True
                     # Toggle SFX similarly
                     sfx_box = toggles["sfx"]["box"]
                     sfx_pill = toggles["sfx"]["pill"]
                     if sfx_box.collidepoint(pos) or sfx_pill.collidepoint(pos):
                         self.settings["sfx"] = not self.settings.get("sfx", True)
                         print("sfx ->", self.settings["sfx"])
+                        return True
                     # Back
                     if self.ui_drawn["back"].collidepoint(pos):
                         self.state = MenuState.Main 
+                        return True
 
                 elif self.state == MenuState.Levels:
                     levels = self.ui_drawn["levels"]
@@ -95,8 +101,10 @@ class Menu:
                         if r.collidepoint(pos):
                             self.selected_level = lvl
                             print("Selected level", lvl)
+                            return True
                     if self.ui_drawn["back"].collidepoint(pos):
                         self.state = MenuState.Main
+                        return True
         return False
     def update(self):
         # show selected level hint on main
