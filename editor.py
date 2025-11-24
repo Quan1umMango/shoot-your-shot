@@ -105,8 +105,6 @@ class Tool():
             if obj.rect.colliderect(rect):
                 objects.pop(i)
                 break
-
-
     def draw_preview(self,screen,objs):
         if self.type == ToolType.Eraser:
             rect = self.rect
@@ -159,6 +157,8 @@ class Editor:
         self.objects = create_borders()
         self.tool = Tool(ToolType.Object,ObjType.StaticBlock)
 
+        self.file_name = False
+
     def draw(self,screen):
         for obj in self.objects:
             obj.draw(screen)
@@ -167,8 +167,33 @@ class Editor:
     def update(self):
         self.tool.update(None,self.objects)
 
+    def save(self):
+        if not self.file_name: return self.save_as()
+        import json
+        level = self.into_level()
+        with open(self.file_name,'w') as f:
+            json.dump(level.to_dict(),f)
+        return True
+
+    def save_as(self):
+        import filedialpy
+        self.file_name =  filedialpy.saveFile()
+        if not self.file_name: return False
+        import json
+        level = self.into_level()
+        with open(self.file_name,'w') as f:
+            json.dump(level.to_dict(),f)
+        return True
+
     def process_event(self,event) -> bool:
-    
+        keys = pygame.key.get_pressed()
+        
+        if keys[pygame.K_LCTRL] and keys[pygame.K_s] and keys[pygame.K_LSHIFT]:
+            return self.save_as()
+ 
+        if keys[pygame.K_LCTRL] and keys[pygame.K_s]:
+            return self.save()
+           
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_1:
                 self.tool = Tool(ToolType.Object,ObjType.StaticBlock)
