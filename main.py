@@ -1,270 +1,92 @@
-import pygame
-import time
 from enum import Enum
+import time
 
-
-# pygame setup
-pygame.init()
+import pygame, os
 pygame.font.init()
 
-# Screen consts
-SCREEN_W, SCREEN_H = 1280,720
+from constants import *
+SCREEN = pygame.display.set_mode((SCREEN_W, SCREEN_H))
+CLOCK = pygame.time.Clock()
 
-# Color consts
-BLACK = 0,0,0
-WHITE = 255,255,255
-MAROON = 128, 0, 0
-RED = 255,0,0
-DARK_GREEN =  0, 100,0 
-LIGHT_GREEN =  45, 207, 70
-
-BG_COLOR = 45,207,70
-BLOCK_COLOR = DARK_GREEN
-
-# Game object consts
-
-""" Represents the borders width (if its verticle) or its height (if its horizontal) """
-BORDER_SIZE = 30
-
-""" Represents the sizes of squares where all the game objects such as holes and obstacles """
-SQUARE_SIZE = 20
-
-BALL_RADIUS = 15 
-BALL_COLOR = RED
-
-FRICTION = 0.1 
-MAX_VELOCITY = 750
-
-STEP_BY = 0.01
-
-# Misc
-MOUSE_BUTTON_ONE = 1
-
-class Ball:
-    def __init__(self,x,y):
-        self.rect = pygame.Rect(x,y,BALL_RADIUS,BALL_RADIUS)
-        # You may wonder why we represent velocity as a scalar but also have a dir vector component. it just works better this way
-        self.dir = pygame.math.Vector2(0,0)
-        self.velocity = 0.0 
-
-    def draw(self,screen):
-        pygame.draw.circle(screen,BALL_COLOR,(self.rect.x,self.rect.y),BALL_RADIUS)
-        # border
-        pygame.draw.circle(screen,BLACK,(self.rect.x,self.rect.y),BALL_RADIUS,2)
-
-    def update(self,objects):
-        # So we predict if the next position where our ball is going to be is gonna collide with something
-        # We create a dummy rectangle to test our predicitions with and assign it the values our actual ball would take if we didnt check for collisions
-        rect = self.rect
-        rect.x += self.velocity * self.dir.x * STEP_BY 
-        rect.y += self.velocity * self.dir.y * STEP_BY 
-
-        for obj in objects:
-            # Now, now, theres 4 cases.
-            # 1.Ball collides a block with its top surface touching the block's bottom surface (ball makes contact with an object above it)
-            # 2.Ball collides a block with its bottom surface touching the block's top surface
-            # 3.Ball collides a block with its left surface touching the block's right surface
-            # 4.Ball collides a block with its right surface touching the block's left surface
-
-            # Depending on the situation, we need to change the ball's velocity accordingly.
-            # Example: If the ball touches an object on its right, we change the velocity (or here, the dir)'s x component to be the opposite of that
-            # that is, dir.x = -dir.x
-            
-
-            obj_rect = obj.rect.copy()
-            
-            if not rect.colliderect(obj_rect): continue
-
-            dx = rect.centerx - obj_rect.centerx
-            dy = rect.centery - obj_rect.centery
-
-            overlap_x = (rect.width + obj_rect.width)/2 - abs(dx)
-            overlap_y = (rect.height + obj_rect.height)/2 - abs(dy)
-
-            if overlap_x < overlap_y:
-                self.dir.x *= -1
-            else:
-                self.dir.y *= -1
+from main_menu import *
+from ui_misc import *
+from serde import *
+from ball import Ball
+from level import Level
+from block import Block, StaticBlock, MovingBlock
 
 
-        self.move()
-
-
-
-    def move(self):
-        self.rect.x += self.velocity  * self.dir.x
-        self.rect.y += self.velocity * self.dir.y
-
-        if abs(self.velocity) > 1:
-            self.velocity -= FRICTION * -1 if self.velocity < 0 else 1
-        else:
-            self.velocity = 0
-    def is_moving(self):
-        return self.velocity != 0
-    
-    """ Calculates the force (with its direction) when initial and final position of the mouse are given. This is what we use when we drag and release the mouse to shoot the ball """
-    def calc_force(self,initial_pos,final_pos):
-        initial_pos = pygame.math.Vector2(initial_pos)
-        final_pos = pygame.math.Vector2(final_pos)
-
-        # In our game, force and velocity mean the same thing ok (just simplyifes things)
-        vel = min((initial_pos - final_pos).magnitude(),MAX_VELOCITY)
-        if vel == 0: return
-
-        dir_ = (initial_pos-final_pos).normalize()
-        self.velocity = vel * 0.1
-        self.dir = dir_
-         
-
-
-class StaticBlock:
-    def __init__(self,x,y,w,h):
-        self.rect = pygame.Rect(x,y,w,h)
-        
-    def draw(self,screen):
-        pygame.draw.rect(screen,BLOCK_COLOR,self.rect)
-
-class LevelState(Enum):
-    PLAYING = 1
-    WON_ANIM = 2
-    WON  = 3
-
-class Level:
-    def __init__(self,start,end,objs):
-        self.ball_start = start
-        self.ball = Ball(start[0],start[1])
-        self.ball_end = end
-        self.objects = objs
-
-        self.state = LevelState.PLAYING
-        # This stores the initial and final/current position of the mouse when it was first clicked at the start of every shot
-        self.mouse_initial_pos = None
-        self.mouse_final_pos = None
-
-        self.num_strokes = 0
-        self.start_time = time.time()
-
-        # text stuff (make sure you call pygame.font.init() before)
-        # default_font = pygame.font.get_default_font()
-        self.font = pygame.font.Font(None,40)
-    
-    def draw(self,screen):
-
-        self.ball.draw(screen)
-        for obj in self.objects:
-            obj.draw(screen)
-        pygame.draw.circle(screen,BLACK,self.ball_end,BALL_RADIUS)
-        
-        
-
-
-        text_surface = self.font.render('Your score: {}'.format(self.num_strokes),True,WHITE)
-        screen.blit(text_surface,(BORDER_SIZE+10,30))
-
-
-
-    def update(self):
-        end_rect = pygame.Rect(self.ball_end[0],self.ball_end[1],BALL_RADIUS,BALL_RADIUS)
-
-        ball_rect = self.ball.rect
-        if ball_rect.colliderect(end_rect):
-            self.state = LevelState.WON
-            
-        match self.state:
-            case LevelState.PLAYING:
-                self.ball.update(self.objects)
-            case LevelState.WON:
-                pass
-
-    """
-        Handles Mouse Events.
-        RETURNS True if the event was used by it, else False
-    """
-    def handle_mouse_event(self,event):
-        if self.ball.is_moving(): return False
-        if self.mouse_initial_pos is not None:
-            self.mouse_final_pos = pygame.mouse.get_pos()
-        match event.type:
-            case pygame.MOUSEBUTTONDOWN:
-                btn = event.button
-                pos = event.pos
-                if btn == MOUSE_BUTTON_ONE:
-                    self.mouse_initial_pos = pos
-                return True
-            case pygame.MOUSEBUTTONUP:
-                self.num_strokes += 1
-                btn = event.button
-                pos = event.pos
-                if btn == MOUSE_BUTTON_ONE:
-                    self.mouse_final_pos = pos
-                self.ball.calc_force(self.mouse_initial_pos,self.mouse_final_pos)
-                self.mouse_initial_pos = None
-                self.mouse_final_pos = None
-                return True
-        return False
-
-
+pygame.display.set_caption("Shoot Your Shot")
 
 
 def create_borders():
     rects = [
             (0,0,SCREEN_W,BORDER_SIZE), 
             (0,SCREEN_H-BORDER_SIZE,SCREEN_W,BORDER_SIZE), 
-            (0,0,BORDER_SIZE,SCREEN_H), 
-            (SCREEN_W-BORDER_SIZE,0,BORDER_SIZE,SCREEN_H)    ]
-    return [ StaticBlock(v[0],v[1],v[2],v[3]) for v in rects ]
-
-def draw_bg_squares(screen):
-    start_x, end_x = BORDER_SIZE, SCREEN_W - BORDER_SIZE
-    start_y, end_y = BORDER_SIZE, SCREEN_H - BORDER_SIZE
-
-    count = 0 
-
-    for y in range(start_y, end_y,SQUARE_SIZE):
-        for x in range(start_x,end_x,SQUARE_SIZE):
-            r = pygame.Rect(x,y,SQUARE_SIZE,SQUARE_SIZE)
-            #c = LIGHT_GREEN if count % 2 == 0 else DARK_GREEN
-            c = BG_COLOR 
-            pygame.draw.rect(screen,c,r)
-            count += 1
+            (0,BORDER_SIZE,BORDER_SIZE,SCREEN_H-BORDER_SIZE), 
+            (SCREEN_W-BORDER_SIZE,BORDER_SIZE,BORDER_SIZE,SCREEN_H)    
+            ]
+    return [ Block(SCREEN,StaticBlock(v[0],v[1],v[2],v[3])) for v in rects ]
 
 
-LEVEL_0 = Level((SCREEN_W/2,SCREEN_H/2),(SCREEN_W/2,BORDER_SIZE+BALL_RADIUS + 5),create_borders())
 
-def main():
+objs = create_borders()
+LEVEL_0 = Level(SCREEN,(SCREEN_W/2,SCREEN_H/2),(SCREEN_W/2,BORDER_SIZE+BALL_RADIUS + 5),objs)
+LEVEL_1 = Level(SCREEN,(SCREEN_W/2,SCREEN_H/2),(SCREEN_W/2,BORDER_SIZE+BALL_RADIUS + 5),objs)
+LEVEL_1.from_dict(
+{'ball_start': (660, 240), 'ball_end': (150, 270), 'ball': {'rect': {'x': 660, 'y': 240, 'w': 15, 'h': 15}, 'velocity': 0.0, 'dir': {'x': 0.0, 'y': 0.0}}, 'objects': [{'inner': {'rect': {'x': 0, 'y': 0, 'w': 1280, 'h': 30}}}, {'inner': {'rect': {'x': 0, 'y': 690, 'w': 1280, 'h': 30}}}, {'inner': {'rect': {'x': 0, 'y': 30, 'w': 30, 'h': 690}}}, {'inner': {'rect': {'x': 1250, 'y': 30, 'w': 30, 'h': 720}}}, {'inner': {'rect': {'x': 300, 'y': 210, 'w': 30, 'h': 30}}}, {'inner': {'rect': {'x': 360, 'y': 240, 'w': 30, 'h': 30}}}, {'inner': {'rect': {'x': 390, 'y': 240, 'w': 30, 'h': 30}}}, {'inner': {'rect': {'x': 360, 'y': 300, 'w': 30, 'h': 30}}}, {'inner': {'rect': {'x': 480, 'y': 240, 'w': 30, 'h': 30}}}, {'inner': {'rect': {'x': 420, 'y': 300, 'w': 30, 'h': 30}}}]}
+)
 
-    screen = pygame.display.set_mode((SCREEN_W,SCREEN_H))
-    clock = pygame.time.Clock()
+LEVELS = [LEVEL_0,LEVEL_1]
+
+class AppState(Enum):
+    Menu = 1,
+    Playing = 2
+
+class App:
+    def __init__(self):
+        self.state = AppState.Menu
+        def play():
+            level = LEVELS[self.inner.selected_level]
+            #level = LEVEL_0
+            self.inner = level
+            self.state = AppState.Playing
+        self.inner = Menu(play)
+
+    def handle_input(self,event):
+        return self.inner.handle_input(event)
+
+    def update(self):
+        self.inner.update()
+    
+    def draw(self):
+        self.inner.draw()
+
+    def switch_to_level(self,level):
+        self.state = AppState.Playing
+        self.inner = level
+
+
+def main_loop():
+    app = App()
     running = True
 
-    current_level = LEVEL_0
-
     while running:
+        SCREEN.fill(BG_COLOR)
         for event in pygame.event.get():
-            if current_level.handle_mouse_event(event): break
-            match event.type:
-                case pygame.QUIT:
-                    running = False
+            if event.type == pygame.QUIT:
+                running = False
+                break 
+            if app.handle_input(event):
+                continue
+        app.update()
+        app.draw()
 
-        current_level.update()
-
-
-        screen.fill(BG_COLOR)
-
-        """
-        # draw_bg_squares(screen)
-        for border in borders:
-            border.draw(screen)
-        ball.draw(screen)
-        """
-
-        current_level.draw(screen)
 
         pygame.display.flip()
-
-        clock.tick(60)  
+        CLOCK.tick(FPS)
 
     pygame.quit()
 
 if __name__ == "__main__":
-    main()
+    main_loop()
