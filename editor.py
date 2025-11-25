@@ -156,6 +156,7 @@ class Editor:
     def __init__(self):
         self.objects = create_borders()
         self.tool = Tool(ToolType.Object,ObjType.StaticBlock)
+        self.redo_buf = []
 
         self.file_name = False
 
@@ -188,6 +189,15 @@ class Editor:
     def process_event(self,event) -> bool:
         keys = pygame.key.get_pressed()
         
+        if keys[pygame.K_LCTRL]:
+            if keys[pygame.K_z]:
+                print(keys[pygame.K_z],keys[pygame.K_LCTRL])
+                self.undo()
+                return True
+            if keys[pygame.K_y]:
+                self.redo()
+                return  True
+
         if keys[pygame.K_LCTRL] and keys[pygame.K_s] and keys[pygame.K_LSHIFT]:
             return self.save_as()
  
@@ -247,6 +257,15 @@ class Editor:
                 if valid_start: valid_start = False; break 
                 valid_start = True
         return valid_start and valid_end
+
+    def undo(self):
+        if not self.objects[-1].editable: return 
+        self.redo_buf.append(self.objects.pop())
+
+    def redo(self):
+        if len(self.redo_buf) < 1: return
+        self.objects.append(self.redo_buf.pop())
+
 
 def main():
     screen = pygame.display.set_mode((SCREEN_W,SCREEN_H))
