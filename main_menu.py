@@ -1,7 +1,8 @@
 import pygame
 from constants import *
+from level import Level
 from ui_misc import *
-from main import SCREEN,CLOCK
+from main import SCREEN,CLOCK,LEVEL_0
 
 from math import sin
 from enum import Enum
@@ -15,7 +16,7 @@ class MenuState(Enum):
 class Menu:
     def __init__(self,onplaybuttonclicked):
         self.state = MenuState.Intro
-        self.selected_level = 0
+        self.selected_level = SelectedLevel(SelectedLevelType.Premade,0)
         self.settings = {"music": True, "sfx": True}
         self.ui_drawn = None
 
@@ -94,14 +95,20 @@ class Menu:
                     if self.ui_drawn["back"].collidepoint(pos):
                         self.state = MenuState.Main 
                         return True
-
+                                                
                 elif self.state == MenuState.Levels:
                     levels = self.ui_drawn["levels"]
                     for lvl, r in levels.items():
                         if r.collidepoint(pos):
-                            self.selected_level = lvl
+                            self.selected_level = SelectedLevel(SelectedLevelType.Premade,lvl) 
                             print("Selected level", lvl)
                             return True
+                    if self.ui_drawn["custom"].collidepoint(pos):
+                        import filedialpy
+                        file = filedialpy.openFile()
+                        if not file: return True
+                        self.selected_level = SelectedLevel(SelectedLevelType.Custom,file)
+
                     if self.ui_drawn["back"].collidepoint(pos):
                         self.state = MenuState.Main
                         return True
@@ -284,9 +291,19 @@ def draw_level_selector(mouse_pos,hover_state):
         SCREEN.blit(num, num.get_rect(center=rect.center))
         level_rects[i+1] = rect
 
-    back_rect = pygame.Rect(SCREEN_W//2 - 80, SCREEN_H - 100, 160, 50)
+    padding = 40
+    back_btn_size = (160,50)
+    load_custom_btn_size = (160,50)
+    pygame.draw.line(SCREEN,BLACK,(SCREEN_W//2,0),(SCREEN_W//2,SCREEN_H),3)
+
+    back_rect = pygame.Rect(SCREEN_W//2-padding-back_btn_size[0],SCREEN_H-100,back_btn_size[0],back_btn_size[1])
+
+    load_custom_rect = pygame.Rect(SCREEN_W//2-padding+load_custom_btn_size[0]/2,SCREEN_H-100,load_custom_btn_size[0],load_custom_btn_size[1])
+    #back_rect = pygame.Rect(SCREEN_W//2 - back_btn_size[0]/2-load_custom_btn_size[0], SCREEN_H - 100, back_btn_size[0],back_btn_size[1])
+    #load_custom_rect = pygame.Rect(SCREEN_W//2 - load_custom_btn_size[0]/2 + padding, SCREEN_H - 100, load_custom_btn_size[0],load_custom_btn_size[1])
     draw_button_scaled(SCREEN, back_rect, "BACK", 0.0)
-    return {"levels": level_rects, "back": back_rect}
+    draw_button_scaled(SCREEN,load_custom_rect , "CUSTOM", 0.0)
+    return {"levels": level_rects, "back": back_rect,"custom":load_custom_rect}
 
 # update hover states & settings anims (based on base rect positions)
 def update_hover_states(mouse_pos, dt,hover_state,settings,settings_anim):
@@ -311,3 +328,29 @@ def update_hover_states(mouse_pos, dt,hover_state,settings,settings_anim):
         target = 1.0 if (hovered or settings.get(key, False)) else 0.0
         cur = settings_anim[key]
         settings_anim[key] = cur + (target - cur) * min(1.0, ANIM_SPEED * dt)
+
+class SelectedLevelType(Enum):
+    Premade=1,
+    Custom=2
+
+class SelectedLevel:
+    def __init__(self,ty:SelectedLevelType,val):
+        self.val = val
+        self.type = ty
+    def to_level(self):
+        match self.type:
+            case SelectedLevelType.Premade:
+                idx = self.val-1 if self.val > 0  else 0
+                level_dict = LEVELS_DICTS[idx] 
+                level = LEVEL_0
+                level.from_dict(level_dict)
+                return level
+            case SelectedLevelType.Custom:
+                import json
+                with open(self.val,'r') as f:
+                    contents = f.read()
+                    contents = json.loads(contents)
+                    level = LEVEL_0
+                    level.from_dict(contents)
+                    return level
+

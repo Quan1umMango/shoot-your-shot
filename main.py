@@ -47,11 +47,7 @@ class App:
     def __init__(self):
         self.state = AppState.Menu
         def play():
-            #level = LEVELS[self.inner.selected_level]
-            level_dict = LEVELS_DICTS[self.inner.selected_level-1] or LEVEL_0
-            level = LEVEL_0
-            level.from_dict(level_dict)
-            #level = LEVEL_0
+            level = self.inner.selected_level.to_level()
             self.inner = level
             self.state = AppState.Playing
         self.inner = Menu(play)

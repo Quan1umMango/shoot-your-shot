@@ -215,7 +215,6 @@ class Editor:
 
         return False
 
-
     def into_level(self) -> level.Level:
         if not self.validate_level(): return None
         objs = []

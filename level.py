@@ -151,5 +151,3 @@ class Level:
         d['ball'] = self.ball.to_dict()
         d['objects'] = [obj.to_dict() for obj in self.objects]
         return d
-
-
