@@ -191,7 +191,6 @@ class Editor:
         
         if keys[pygame.K_LCTRL]:
             if keys[pygame.K_z]:
-                print(keys[pygame.K_z],keys[pygame.K_LCTRL])
                 self.undo()
                 return True
             if keys[pygame.K_y]:
@@ -220,7 +219,9 @@ class Editor:
             if event.key == pygame.K_5:
                 self.tool = Tool(ToolType.Eraser)
                 return True
+
         if event.type == pygame.MOUSEBUTTONDOWN or pygame.mouse.get_pressed()[0]:
+            self.redo_buf = []
             self.tool.use(self.objects)
 
         return False
