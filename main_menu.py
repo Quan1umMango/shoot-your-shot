@@ -11,20 +11,22 @@ class MenuState(Enum):
     Intro = 1,
     Main = 2,
     Levels = 3,
-    Settings = 4
+    Settings = 4,
+    Editor = 5
 
 class Menu:
-    def __init__(self,onplaybuttonclicked):
+    def __init__(self,onplaybuttonclicked,oneditorbuttonclicked):
         self.state = MenuState.Intro
         self.selected_level = SelectedLevel(SelectedLevelType.Premade,0)
         self.settings = {"music": True, "sfx": True}
         self.ui_drawn = None
 
-        self.hover_state = {"play": 0.0, "level": 0.0, "settings": 0.0}
+        self.hover_state = {"play": 0.0, "editor": 0.0, "settings": 0.0}
         self.settings_anim = {"music": 0.0, "sfx": 0.0}
 
         self.intro_start_time = pygame.time.get_ticks() / 1000.0
         self.onplaybuttonclicked = onplaybuttonclicked
+        self.oneditorbuttonclicked = oneditorbuttonclicked
 
     def draw(self):
 
@@ -62,14 +64,15 @@ class Menu:
                 # MAIN screen clicks (use drawn rects if available)
                 if self.state in (MenuState.Intro,MenuState.Main):
                     play_r = get_inflated_drawn(self.ui_drawn, "play")
-                    level_r = get_inflated_drawn(self.ui_drawn, "level")
+                    editor_r = get_inflated_drawn(self.ui_drawn, "editor")
                     settings_r = get_inflated_drawn(self.ui_drawn, "settings")
                     if play_r.collidepoint(pos):
-                        if self.onplaybuttonclicked: self.onplaybuttonclicked()
-                        print("PLAY pressed — start game! (selected level:", self.selected_level or 1, ")")
-                        return True
-                    elif level_r.collidepoint(pos):
                         self.state = MenuState.Levels
+                        return True
+                    elif editor_r.collidepoint(pos):
+                        if self.oneditorbuttonclicked:
+                            self.oneditorbuttonclicked()
+                        #self.state = MenuState.Levels
                         return True
                     elif settings_r.collidepoint(pos):
                         self.state = MenuState.Settings
@@ -82,14 +85,12 @@ class Menu:
                     music_pill = toggles["music"]["pill"]
                     if music_box.collidepoint(pos) or music_pill.collidepoint(pos):
                         self.settings["music"] = not self.settings.get("music", True)
-                        print("music ->", self.settings["music"])
                         return True
                     # Toggle SFX similarly
                     sfx_box = toggles["sfx"]["box"]
                     sfx_pill = toggles["sfx"]["pill"]
                     if sfx_box.collidepoint(pos) or sfx_pill.collidepoint(pos):
                         self.settings["sfx"] = not self.settings.get("sfx", True)
-                        print("sfx ->", self.settings["sfx"])
                         return True
                     # Back
                     if self.ui_drawn["back"].collidepoint(pos):
@@ -101,13 +102,17 @@ class Menu:
                     for lvl, r in levels.items():
                         if r.collidepoint(pos):
                             self.selected_level = SelectedLevel(SelectedLevelType.Premade,lvl) 
-                            print("Selected level", lvl)
+                            
+                            if self.onplaybuttonclicked: self.onplaybuttonclicked()
+
                             return True
                     if self.ui_drawn["custom"].collidepoint(pos):
                         import filedialpy
                         file = filedialpy.openFile()
                         if not file: return True
                         self.selected_level = SelectedLevel(SelectedLevelType.Custom,file)
+
+                        if self.onplaybuttonclicked: self.onplaybuttonclicked()
 
                     if self.ui_drawn["back"].collidepoint(pos):
                         self.state = MenuState.Main
@@ -151,14 +156,14 @@ def draw_main_menu_with_intro(mouse_pos, intro_t,hover_state):
         pygame.Rect(BUTTON_X, LEVEL_Y, BUTTON_W, BUTTON_H),
         pygame.Rect(BUTTON_X, SETTINGS_Y, BUTTON_W, BUTTON_H)
     ]
-    labels = ["PLAY", "LEVEL SELECT", "SETTINGS"]
+    labels = ["PLAY", "EDITOR", "SETTINGS"]
     drawn = {}
     for i, base in enumerate(bases):
         s_norm = min(1.0, max(0.0, BUTTON_STAGGER[i] / INTRO_DURATION))
         p = 0.0 if intro_t <= s_norm else min(1.0, (intro_t - s_norm) / (1.0 - s_norm))
         p_ease = 1 - (1 - p) ** 3
         scale_override = 0.5 + 0.5 * p_ease
-        key = ("play","level","settings")[i]
+        key = ("play","editor","settings")[i]
         rect_drawn = draw_button_scaled(SCREEN, base, labels[i], hover_state[key], scale_override=scale_override)
         drawn[key] = rect_drawn
 
@@ -173,15 +178,15 @@ def draw_main_menu_normal(mouse_pos,hover_state):
     draw_title(SCREEN)
 
     base_play = pygame.Rect(BUTTON_X, PLAY_Y, BUTTON_W, BUTTON_H)
-    base_level = pygame.Rect(BUTTON_X, LEVEL_Y, BUTTON_W, BUTTON_H)
+    base_editor = pygame.Rect(BUTTON_X, LEVEL_Y, BUTTON_W, BUTTON_H)
     base_settings = pygame.Rect(BUTTON_X, SETTINGS_Y, BUTTON_W, BUTTON_H)
 
     play_drawn = draw_button_scaled(SCREEN, base_play, "PLAY", hover_state["play"])
-    level_drawn = draw_button_scaled(SCREEN, base_level, "LEVEL SELECT", hover_state["level"])
+    editor_drawn = draw_button_scaled(SCREEN, base_editor, "EDITOR", hover_state["editor"])
     settings_drawn = draw_button_scaled(SCREEN, base_settings, "SETTINGS", hover_state["settings"])
     hint = SMALL_FONT.render("Press ESC to go back / quit", True, ACCENT)
     SCREEN.blit(hint, (12, SCREEN_H - 28))
-    return {"play": play_drawn, "level": level_drawn, "settings": settings_drawn}
+    return {"play": play_drawn, "editor": editor_drawn, "settings": settings_drawn}
 
 # Settings menu: boxed rows, icons, pill toggles (music & sfx)
 def draw_settings_menu(mouse_pos,settings_anim,settings):
@@ -308,7 +313,7 @@ def update_hover_states(mouse_pos, dt,hover_state,settings,settings_anim):
     base_settings = pygame.Rect(BUTTON_X, SETTINGS_Y, BUTTON_W, BUTTON_H)
     targets = {
         "play": 1.0 if base_play.collidepoint(mouse_pos) else 0.0,
-        "level": 1.0 if base_level.collidepoint(mouse_pos) else 0.0,
+        "editor": 1.0 if base_level.collidepoint(mouse_pos) else 0.0,
         "settings": 1.0 if base_settings.collidepoint(mouse_pos) else 0.0
     }
     for k in hover_state.keys():

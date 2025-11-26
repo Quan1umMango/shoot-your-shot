@@ -13,6 +13,8 @@ from ui_misc import *
 from serde import *
 from ball import Ball
 from level import Level
+import editor
+from editor import Editor
 from block import Block, StaticBlock, MovingBlock
 
 
@@ -41,7 +43,8 @@ LEVEL_1.from_dict(
 
 class AppState(Enum):
     Menu = 1,
-    Playing = 2
+    Playing = 2,
+    Editor = 3
 
 class App:
     def __init__(self):
@@ -50,7 +53,11 @@ class App:
             level = self.inner.selected_level.to_level()
             self.inner = level
             self.state = AppState.Playing
-        self.inner = Menu(play)
+        def oneditor():
+            SCREEN = pygame.display.set_mode((editor.SCREEN_W,editor.SCREEN_H))
+            self.inner = Editor(SCREEN)
+            self.state = AppState.Editor
+        self.inner = Menu(play,oneditor)
 
     def handle_input(self,event):
         return self.inner.handle_input(event)

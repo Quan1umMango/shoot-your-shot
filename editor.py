@@ -153,17 +153,18 @@ def create_borders():
     return [ Object(ObjType.StaticBlock,v[0],v[1],v[2],v[3],False) for v in rects ]
 
 class Editor:
-    def __init__(self):
+    def __init__(self,screen):
+        self.screen = screen
         self.objects = create_borders()
         self.tool = Tool(ToolType.Object,ObjType.StaticBlock)
         self.redo_buf = []
 
         self.file_name = False
 
-    def draw(self,screen):
+    def draw(self):
         for obj in self.objects:
-            obj.draw(screen)
-        self.tool.draw_preview(screen,self.objects)
+            obj.draw(self.screen)
+        self.tool.draw_preview(self.screen,self.objects)
 
     def update(self):
         self.tool.update(None,self.objects)
@@ -185,6 +186,9 @@ class Editor:
         with open(self.file_name,'w') as f:
             json.dump(level.to_dict(),f)
         return True
+
+    def handle_input(self,event)-> bool:
+        return self.process_event(event)
 
     def process_event(self,event) -> bool:
         keys = pygame.key.get_pressed()
@@ -272,7 +276,7 @@ def main():
     screen = pygame.display.set_mode((SCREEN_W,SCREEN_H))
     clock = pygame.time.Clock()
     running = True
-    editor = Editor()
+    editor = Editor(screen)
     while running:
         time_delta = clock.tick(FPS)/1000
         for event in pygame.event.get():
