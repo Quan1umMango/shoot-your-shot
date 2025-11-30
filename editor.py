@@ -25,9 +25,9 @@ SNAP_BY = BORDER_SIZE
 
 
 MAX_W = PLAY_SCREEN_W 
-MIN_W = 5 
+MIN_W = BORDER_SIZE 
 MAX_H = PLAY_SCREEN_H
-MIN_H = 5 
+MIN_H = BORDER_SIZE 
 
 class ObjType(Enum):
     StaticBlock = 1,
@@ -236,14 +236,14 @@ class Editor:
         if keys[pygame.K_w] or keys[pygame.K_h]:
             if self.tool.type == ToolType.Eraser: return False
             if keys[pygame.K_w]:
-                self.tool.rect.w += 5  * (-1 if keys[pygame.K_LSHIFT] else 1)
+                self.tool.rect.w += BORDER_SIZE  * (-1 if keys[pygame.K_LSHIFT] else 1)
                 if self.tool.rect.w > MAX_W:
                     self.tool.rect.w = MAX_W
                 if self.tool.rect.w < MIN_W:
                     self.tool.rect.w = MIN_W
 
             if keys[pygame.K_h]:
-                self.tool.rect.h += 5  * (-1 if keys[pygame.K_LSHIFT] else 1)
+                self.tool.rect.h += BORDER_SIZE  * (-1 if keys[pygame.K_LSHIFT] else 1)
                 if self.tool.rect.h > MAX_H:
                     self.tool.rect.h = MAX_H
                 if self.tool.rect.h < MIN_H:

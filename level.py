@@ -103,7 +103,6 @@ class Level:
                 if self.ball.radius > 1.0:
                    self.ball.radius -= 0.5 * self.ball.radius/10
                 else:
-                    print('a')
                     if self.switchstateonwin:
                         self.switchstateonwin()
                     

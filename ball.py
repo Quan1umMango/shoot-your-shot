@@ -47,11 +47,9 @@ class Ball:
 
             # check for x-axis collision:
             if rect_x.colliderect(obj_rect):
-                print("X COLLISION")
                 self.dir.x *= -1
             # check for y-axis collision:
             if rect_y.colliderect(obj_rect):
-                print("Y COLLISION")
                 self.dir.y *= -1
         self.move()
 
@@ -73,7 +71,6 @@ class Ball:
 
         # In our game, force and velocity mean the same thing ok (just simplyifes things)
         vel = min((initial_pos - final_pos).magnitude(),MAX_VELOCITY)
-        print((initial_pos - final_pos).magnitude())
         if vel == 0: return
 
         dir_ = (initial_pos-final_pos).normalize()
