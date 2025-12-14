@@ -14,8 +14,8 @@
 
 ## 🖼️Screenshots
 
-![Main Menu](/assets/main_menu.png"This is a sample image.")
-![ IN-GAME](/assets/IN.jpg"This is a sample image.")
+![alt text](https://github.com/[AK-627]/[shoot-your-shot]/blob/[assets]/main_menu.png?raw=true)
+![alt text](https://github.com/[AK-627]/[shoot-your-shot]/blob/[assets]/IN.jpg?raw=true)
 
 
 ## ⏯️Installation
@@ -50,7 +50,7 @@ py -m pip install -r requirements.txt
 | `Shift+W` | Decrease Width      |
 | `Shift+H` | Decrease Height        |
   
-![ IN-GAME](/assets/Editor.png"This is a sample image.")
+![ IN-GAME](https://github.com/[AK-627]/[shoot-your-shot]/blob/[assets]/IN.jpg?raw=true)
 
  
 
@@ -101,6 +101,7 @@ py -m pip install -r requirements.txt
 
 ## 📄 License
 This project is created for educational purposes.
+
 
 
 
