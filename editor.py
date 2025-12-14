@@ -22,6 +22,13 @@ SCREEN_W,SCREEN_H = 1500,720
 
 SNAP_BY = BORDER_SIZE
 
+
+
+MAX_W = PLAY_SCREEN_W 
+MIN_W = BORDER_SIZE 
+MAX_H = PLAY_SCREEN_H
+MIN_H = BORDER_SIZE 
+
 class ObjType(Enum):
     StaticBlock = 1,
     MovingBlock = 2,
@@ -42,10 +49,8 @@ class Object:
                 pygame.draw.rect(screen,BLOCK_COLOR,self.rect) 
             case ObjType.Hole:
                 pygame.draw.circle(screen,HOLE_COLOR,(self.rect.x+HOLE_RADIUS,self.rect.y+HOLE_RADIUS),HOLE_RADIUS)
-                
             case ObjType.BallStart:
                 pygame.draw.circle(screen,BALL_COLOR,(self.rect.x+BALL_RADIUS,self.rect.y+BALL_RADIUS),BALL_RADIUS)
-                pygame.draw.rect(screen,BLACK,self.rect,6)
 
 class ToolType(Enum):
     Object = 1,
@@ -104,11 +109,9 @@ class Tool():
     def use_eraser(self,objects):
         rect = self.rect
         for (i,obj) in enumerate(objects):
-            if obj.rect.colliderect(rect):
+            if obj.rect.colliderect(rect) and obj.editable:
                 objects.pop(i)
                 break
-
-
     def draw_preview(self,screen,objs):
         if self.type == ToolType.Eraser:
             rect = self.rect
@@ -116,12 +119,9 @@ class Tool():
                 if rect.colliderect(obj.rect):
                     match obj.type:
                         case ObjType.StaticBlock | ObjType.MovingBlock:
-                            nrect = self.rect.copy()
-                            nrect.w = BORDER_SIZE
-                            nrect.h = BORDER_SIZE
-                            pygame.draw.rect(screen,BLACK,nrect,7)
+                            pygame.draw.rect(screen,BLACK,obj.rect,7)
                         case ObjType.Hole:
-                            pygame.draw.circle(screen,BLACK,(rect.x+HOLE_RADIUS,rect.y+HOLE_RADIUS),HOLE_RADIUS,5)
+                            pygame.draw.circle(screen,BLACK,(rect.x,rect.y),HOLE_RADIUS,5)
                             
                         case ObjType.BallStart:
                             pygame.draw.circle(screen,BLACK,(rect.x+BALL_RADIUS,rect.y+BALL_RADIUS),BALL_RADIUS,5)
@@ -157,20 +157,60 @@ def create_borders():
     return [ Object(ObjType.StaticBlock,v[0],v[1],v[2],v[3],False) for v in rects ]
 
 class Editor:
-    def __init__(self):
+    def __init__(self,screen):
+        self.screen = screen
         self.objects = create_borders()
         self.tool = Tool(ToolType.Object,ObjType.StaticBlock)
+        self.redo_buf = []
 
-    def draw(self,screen):
+        self.file_name = False
+
+    def draw(self):
         for obj in self.objects:
-            obj.draw(screen)
-        self.tool.draw_preview(screen,self.objects)
+            obj.draw(self.screen)
+        self.tool.draw_preview(self.screen,self.objects)
 
     def update(self):
         self.tool.update(None,self.objects)
 
+    def save(self):
+        if not self.file_name: return self.save_as()
+        import json
+        level = self.into_level()
+        with open(self.file_name,'w') as f:
+            json.dump(level.to_dict(),f)
+        return True
+
+    def save_as(self):
+        import filedialpy
+        self.file_name =  filedialpy.saveFile()
+        if not self.file_name: return False
+        import json
+        level = self.into_level()
+        with open(self.file_name,'w') as f:
+            json.dump(level.to_dict(),f)
+        return True
+
+    def handle_input(self,event)-> bool:
+        return self.process_event(event)
+
     def process_event(self,event) -> bool:
-    
+        keys = pygame.key.get_pressed()
+        
+        if keys[pygame.K_LCTRL]:
+            if keys[pygame.K_z]:
+                self.undo()
+                return True
+            if keys[pygame.K_y]:
+                self.redo()
+                return  True
+
+        if keys[pygame.K_LCTRL] and keys[pygame.K_s] and keys[pygame.K_LSHIFT]:
+            return self.save_as()
+ 
+        if keys[pygame.K_LCTRL] and keys[pygame.K_s]:
+            return self.save()
+           
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_1:
                 self.tool = Tool(ToolType.Object,ObjType.StaticBlock)
@@ -187,11 +227,29 @@ class Editor:
             if event.key == pygame.K_5:
                 self.tool = Tool(ToolType.Eraser)
                 return True
-        if event.type == pygame.MOUSEBUTTONDOWN:
+
+        if event.type == pygame.MOUSEBUTTONDOWN or pygame.mouse.get_pressed()[0]:
+            self.redo_buf = []
             self.tool.use(self.objects)
+            return True
+        
+        if keys[pygame.K_w] or keys[pygame.K_h]:
+            if self.tool.type == ToolType.Eraser: return False
+            if keys[pygame.K_w]:
+                self.tool.rect.w += BORDER_SIZE  * (-1 if keys[pygame.K_LSHIFT] else 1)
+                if self.tool.rect.w > MAX_W:
+                    self.tool.rect.w = MAX_W
+                if self.tool.rect.w < MIN_W:
+                    self.tool.rect.w = MIN_W
 
+            if keys[pygame.K_h]:
+                self.tool.rect.h += BORDER_SIZE  * (-1 if keys[pygame.K_LSHIFT] else 1)
+                if self.tool.rect.h > MAX_H:
+                    self.tool.rect.h = MAX_H
+                if self.tool.rect.h < MIN_H:
+                    self.tool.rect.h = MIN_H
+            return True
         return False
-
 
     def into_level(self) -> level.Level:
         if not self.validate_level(): return None
@@ -200,10 +258,10 @@ class Editor:
         ball_end = ()
         for obj in self.objects:
             if obj.type == ObjType.Hole:
-                ball_end = obj.rect.x,obj.rect.y
+                ball_end = obj.rect.x+HOLE_RADIUS,obj.rect.y+HOLE_RADIUS
                 continue
             if obj.type == ObjType.BallStart:
-                ball_start = obj.rect.x,obj.rect.y
+                ball_start = obj.rect.x+BALL_RADIUS,obj.rect.y+BALL_RADIUS
                 continue
             if obj.type == ObjType.StaticBlock:
                 rect = obj.rect
@@ -226,28 +284,31 @@ class Editor:
                 valid_start = True
         return valid_start and valid_end
 
+    def undo(self):
+        if not self.objects[-1].editable: return 
+        self.redo_buf.append(self.objects.pop())
+
+    def redo(self):
+        if len(self.redo_buf) < 1: return
+        self.objects.append(self.redo_buf.pop())
+
 
 def main():
     screen = pygame.display.set_mode((SCREEN_W,SCREEN_H))
     clock = pygame.time.Clock()
     running = True
-    editor = Editor()
+    editor = Editor(screen)
     while running:
         time_delta = clock.tick(FPS)/1000
         for event in pygame.event.get():
             if editor.process_event(event): break
             match event.type:
                 case pygame.QUIT:
-                    level = editor.into_level()
-                    if level:
-                        print(level.to_dict()) 
-                    else: 
-                        print("Invalid level")
                     running = False
 
         editor.update()
         screen.fill(BG_COLOR)
-        editor.draw(screen)
+        editor.draw()
         pygame.display.flip()
     pygame.quit()
 

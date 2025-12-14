@@ -28,10 +28,11 @@ class MovingBlock:
         self.current_checkpoint = 0
         self.speed = speed
 
-    def draw(self):
-        pygame.draw.rect(self.screen,BLOCK_COLOR,self.rect)
+    def draw(self,screen):
+        pygame.draw.rect(screen,BLOCK_COLOR,self.rect)
 
     def update(self):
+        if len(self.checkpoints) == 0: return
         to = self.checkpoints[self.current_checkpoint]
         rect_v = pygame.math.Vector2(self.rect.x,self.rect.y)
 
@@ -42,7 +43,7 @@ class MovingBlock:
         self.rect.y -= dir_.y * self.speed
 
     def from_dict(self,dict_):
-        self.rect = rect_form_dict(dict_.get('rect'))
+        self.rect = rect_from_dict(dict_.get('rect'))
         self.current_checkpoint = dict_.get('current_checkpoint') or 0
         self.speed = dict_.get('speed') or 0
         self.checkpoints = [vector2_from_dict(d) for d in dict_.get('checkpoints') or [] ]

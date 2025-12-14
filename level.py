@@ -11,8 +11,11 @@ class LevelState(Enum):
     PLAYING = 1
     WON = 2
 
+"""
+    Manages everything realted to a specific level (like collisions, drawing, drawing menus etc)
+"""
 class Level:
-    def __init__(self,screen,start,end,objs):
+    def __init__(self,screen,start,end,objs,switchstateonwin=None):
         self.screen = screen
         self.ball_start = start
         self.ball = Ball(self.screen,start[0],start[1])
@@ -33,38 +36,40 @@ class Level:
 
         self.level_end_anim = 0.0
 
-        def onlevelend():
+        def onlevelwin():
             self.state = LevelState.WON
             self.ball.rect.x = self.ball_end[0]
             self.ball.rect.y = self.ball_end[1]
             self.level_end_anim = 0.0
 
-        self.onlevelend = onlevelend
+        self.onlevelwin = onlevelwin
+        self.switchstateonwin = None
 
     def draw(self):
 
 
-        mouse_pos_initial_v = pygame.math.Vector2(self.mouse_initial_pos or (self.ball.rect.x,self.ball.rect.y))
-        mouse_pos_final_v = pygame.math.Vector2(self.mouse_final_pos or (self.ball.rect.x,self.ball.rect.y))
-        dir_v =  mouse_pos_initial_v - mouse_pos_final_v
 
+        if self.mouse_initial_pos is not None and self.mouse_final_pos is not None :
+            mouse_pos_initial_v = pygame.math.Vector2(self.mouse_initial_pos or (self.ball.rect.x,self.ball.rect.y))
+            mouse_pos_final_v = pygame.math.Vector2(self.mouse_final_pos or (self.ball.rect.x,self.ball.rect.y))
+            dir_v =  mouse_pos_initial_v - mouse_pos_final_v
+            if dir_v.magnitude() != 0:
 
-        if self.mouse_initial_pos is not None and  dir_v.magnitude != 0:
-            x_vector = pygame.math.Vector2(1,0)
-            
-            theta = dir_v.angle_to(x_vector)
+                x_vector = pygame.math.Vector2(1,0)
 
-            dir_ = dir_v.normalize()
-            rect = self.ball.rect
-            o = pygame.math.Vector2(rect.x,rect.y)
-            p1_ = pygame.math.Vector2(BALL_RADIUS,0)
-            p2_ = pygame.math.Vector2(-BALL_RADIUS,0)
-            p3_ = pygame.math.Vector2(0,-BALL_RADIUS) 
-            
-            p1 = o + p1_.rotate(90-theta)
-            p2 = o + p2_.rotate(90-theta)
-            p3 = o + p3_.rotate(90-theta) *  max(2,dir_v.magnitude()//50) 
-            pygame.draw.polygon(self.screen,WHITE,[p1,p2,p3])
+                theta = dir_v.angle_to(x_vector)
+
+                dir_ = dir_v.normalize()
+                rect = self.ball.rect
+                o = pygame.math.Vector2(rect.x,rect.y)
+                p1_ = pygame.math.Vector2(BALL_RADIUS,0)
+                p2_ = pygame.math.Vector2(-BALL_RADIUS,0)
+                p3_ = pygame.math.Vector2(0,-BALL_RADIUS) 
+
+                p1 = o + p1_.rotate(90-theta)
+                p2 = o + p2_.rotate(90-theta)
+                p3 = o + p3_.rotate(90-theta) *  max(2,dir_v.magnitude()//50) 
+                pygame.draw.polygon(self.screen,WHITE,[p1,p2,p3])
 
         for obj in self.objects:
             obj.draw()
@@ -72,17 +77,22 @@ class Level:
         
         self.ball.draw()
 
-        text_surface = self.font.render('Your score: {}'.format(self.num_strokes),True,WHITE)
+        text_surface = self.font.render('Number of strokes: {}'.format(self.num_strokes),True,WHITE)
         self.screen.blit(text_surface,(BORDER_SIZE+10,30))
 
 
+
+
     def update(self):
+        if self.state == LevelState.WON and self.level_end_anim == 1.0 and self.switchstateonwin: 
+            self.switchstateonwin()
+
         end_rect = pygame.Rect(self.ball_end[0],self.ball_end[1],HOLE_RADIUS,HOLE_RADIUS)
 
         ball_rect = self.ball.rect
         if ball_rect.colliderect(end_rect):
             self.state = LevelState.WON
-            self.onlevelend()
+            self.onlevelwin()
             
         match self.state:
             case LevelState.PLAYING:
@@ -93,8 +103,8 @@ class Level:
                 if self.ball.radius > 1.0:
                    self.ball.radius -= 0.5 * self.ball.radius/10
                 else:
-                    # TODO: show next level screen
-                    pass
+                    if self.switchstateonwin:
+                        self.switchstateonwin()
                     
     """
         Handles Mouse Events.
@@ -113,12 +123,13 @@ class Level:
                 return True
             case pygame.MOUSEBUTTONUP:
                 if not self.mouse_initial_pos or not self.mouse_final_pos: return False
-                self.num_strokes += 1
                 btn = event.button
                 pos = event.pos
                 if btn == MOUSE_BUTTON_ONE:
                     self.mouse_final_pos = pos
-                self.ball.calc_force(self.mouse_initial_pos or (0,0),self.mouse_final_pos or (0,0))
+                    self.ball.calc_force(self.mouse_initial_pos or (0,0),self.mouse_final_pos or (0,0))
+                    if (pygame.math.Vector2(self.mouse_initial_pos)-pygame.math.Vector2(self.mouse_final_pos)).magnitude() != 0:
+                        self.num_strokes += 1
                 self.mouse_initial_pos = None
                 self.mouse_final_pos = None
                 return True
@@ -150,5 +161,3 @@ class Level:
         d['ball'] = self.ball.to_dict()
         d['objects'] = [obj.to_dict() for obj in self.objects]
         return d
-
-

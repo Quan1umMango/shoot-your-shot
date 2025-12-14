@@ -40,6 +40,7 @@ STEP_BY = 1/FPS
 BACKGROUND_IMAGE = './assets/iamge.png'
 MUSIC_ICON_PATH = './assets/icon_music.png'
 SFX_ICON_PATH = './assets/icon_sfx.png'
+LEVELS_PATH = './levels/'
 CUSTOM_FONT_FILENAMES = ["game_font.ttf", "pixel_font.ttf", "arcade_font.ttf"]
 INTRO_DURATION = 3
 BUTTON_STAGGER = [1,1.5, 2]
@@ -63,4 +64,21 @@ ANIM_SPEED = 4.5
 MOUSE_BUTTON_ONE = 1
 
 HOVER_SPEED = 8.0
+
+
+def load_levels_dict():
+    import os
+    import json
+    if not os.path.exists(LEVELS_PATH): return []
+    levels = []
+    files = os.listdir(LEVELS_PATH)
+    for file_name in files:
+        with open(LEVELS_PATH+'/'+file_name,'r') as file:
+            conts = file.read()
+            contents = json.loads(conts)
+            levels.append(contents)
+    return levels
+    
+LEVELS_DICTS = load_levels_dict()
+
 
