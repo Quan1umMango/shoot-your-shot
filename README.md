@@ -14,9 +14,8 @@
 
 ## 🖼️Screenshots
 
-![alt text](https://github.com/[AK-627]/[shoot-your-shot]/blob/[assets]/main_menu.png?raw=true)
 ![Gameplay Screenshot](assets/main_menu.png)
-
+![Gameplay Screenshot](assets/IN.jpg)
 
 ## ⏯️Installation
 Clone this repo using:
@@ -50,7 +49,7 @@ py -m pip install -r requirements.txt
 | `Shift+W` | Decrease Width      |
 | `Shift+H` | Decrease Height        |
   
-![ IN-GAME](https://github.com/[AK-627]/[shoot-your-shot]/blob/[assets]/IN.jpg?raw=true)
+![Gameplay Screenshot](assets/11111222.png)
 
  
 
