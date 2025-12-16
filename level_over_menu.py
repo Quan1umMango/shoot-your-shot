@@ -11,7 +11,7 @@ from enum import Enum
 WIN_TITLE_FONT = load_game_font(40)
 
 class LevelOverMenu:
-    def __init__(self,num_strokes,onnextlevelbuttonclicked,onbackbuttonclicked):
+    def __init__(self,num_strokes,onnextlevelbuttonclicked,onbackbuttonclicked,is_premade:bool):
         self.onnextlevelbuttonclicked = onnextlevelbuttonclicked  
         self.onbackbuttonclicked = onbackbuttonclicked  
         self.num_strokes = num_strokes
@@ -19,6 +19,7 @@ class LevelOverMenu:
         MENU_SIZE = (500,500)
         PADDING = 50
         BUTTON_H = 75 
+        self.is_premade = is_premade
         
         MENU_POS = (SCREEN_W/2-MENU_SIZE[0]/2,SCREEN_H/2-MENU_SIZE[1]/2)
         self.menu_rect = pygame.Rect(MENU_POS[0],MENU_POS[1],MENU_SIZE[0],MENU_SIZE[1])
@@ -44,7 +45,8 @@ class LevelOverMenu:
 
         SCREEN.blit(self.title_txt,self.title_pos)
         SCREEN.blit(self.num_strokes_txt,self.num_strokes_pos)
-        draw_button_scaled(SCREEN,self.play_next_rect,"Play Next",self.hover_state["next"])
+        if self.is_premade:
+            draw_button_scaled(SCREEN,self.play_next_rect,"Play Next",self.hover_state["next"])
         draw_button_scaled(SCREEN,self.back_to_menu_rect,"Back to Menu",self.hover_state["back"])
     
     def update(self):
