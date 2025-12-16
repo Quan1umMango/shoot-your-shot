@@ -348,6 +348,7 @@ class SelectedLevel:
                 level_dict = LEVELS_DICTS[idx] 
                 level = LEVEL_0
                 level.from_dict(level_dict)
+                level.is_premade = True
                 return level
             case SelectedLevelType.Custom:
                 import json

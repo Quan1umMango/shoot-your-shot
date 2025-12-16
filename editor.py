@@ -59,6 +59,8 @@ class Tool():
     def __init__(self,ttype:ToolType,extra:ObjType = None):
         self.type = ttype
         self.extra = extra
+        self.checkpoints = []
+        
         if ttype == ToolType.Object:
             assert extra != None, "Cannot have extra be None when given type is not ToolType.Object"
             match extra:

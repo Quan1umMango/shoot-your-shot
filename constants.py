@@ -1,5 +1,5 @@
 # Screen consts
-SCREEN_W, SCREEN_H = 1280,720
+SCREEN_W, SCREEN_H = 1320,720
 FPS = 60 
 
 # Color consts
