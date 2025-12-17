@@ -1,5 +1,5 @@
 # Screen consts
-SCREEN_W, SCREEN_H = 1280,720
+SCREEN_W, SCREEN_H = 1320,720
 FPS = 60 
 
 # Color consts
@@ -7,6 +7,7 @@ BLACK = 0,0,0
 WHITE = 255,255,255
 MAROON = 128, 0, 0
 RED = 255,0,0
+GREEN = 0,255,0
 DARK_GREEN =  0, 100,0 
 LIGHT_GREEN = 90,180,80 
 GREEN_BG = LIGHT_GREEN 
@@ -72,13 +73,18 @@ def load_levels_dict():
     if not os.path.exists(LEVELS_PATH): return []
     levels = []
     files = os.listdir(LEVELS_PATH)
-    for file_name in files:
+    for file_name in sorted(files):
         with open(LEVELS_PATH+'/'+file_name,'r') as file:
             conts = file.read()
             contents = json.loads(conts)
             levels.append(contents)
+
     return levels
     
 LEVELS_DICTS = load_levels_dict()
 
 
+# Editor UI Constants
+BUTTON_NORMAL = DARK_GREEN
+BUTTON_SELECTED = GREEN
+BUTTON_HOVERED = LIGHT_GREEN
