@@ -4,7 +4,7 @@
 ### Mini golf game written in python, as a group project.
 ###### 
 
-## 💥Features
+## Features
 - Mini-golf gameplay with physics
 - Multiple playable levels
 - Pause menu with resume and restart
@@ -12,12 +12,12 @@
 - Built-in level editor
 
 
-## 🖼️Screenshots
+## Screenshots
 
 ![Gameplay Screenshot](assets/main_menu.png)
 ![Gameplay Screenshot](assets/11111222.jpg)
 
-## ⏯️Installation
+## Installation
 Clone this repo using:
 ```git
 git clone https://Quan1umMango/shoot-your-shot
@@ -27,7 +27,7 @@ Then run this command to install the requirements
 ```
 py -m pip install -r requirements.txt
 ```
-##   **🤖Gameplay**
+##   **Gameplay**
 
 | Key           | Action                       |
 | ------------- | ---------------------------- |
@@ -35,7 +35,7 @@ py -m pip install -r requirements.txt
 | `P` / `Esc`   | Pause Game                   |
 
 
-## ✏️ EDITOR CONTROLS
+## EDITOR CONTROLS
 ### To Enter Editor Mode Press Custom 
 | Key | Function            |
 | --- | ------------------- |
@@ -55,7 +55,7 @@ py -m pip install -r requirements.txt
 
 
 
-## 🏗️ Architecture
+##  Architecture
 | Component / Module     | Responsibility   | Description              |
 | ---------------------- | ---------------- | ------------------------ |
 | `main.py`              | Entry point      | Runs the main game loop  |
@@ -77,7 +77,7 @@ py -m pip install -r requirements.txt
 | `Resize System`        | Object scaling   | Modify sizes             |
 | `Erase Tool`           | Object removal   | Delete objects           |
 
-## 🔄 Game Flow
+##  Game Flow
 1. Launch game
 2. Select level from menu / Make your Custom Level
 3. Play level
@@ -85,20 +85,20 @@ py -m pip install -r requirements.txt
 5. Restart, proceed, or return to menu
 
 
-## 📕 Learning Outcomes
+##  Learning Outcomes
 - State-based game architecture
 - Event handling in Pygame
 - Basic physics simulation
 - Modular Python design
 
 
-## 👥 Team
+##  Team
 - Aston Dsouza (PES2UG25CS108) — Core gameplay
 - Ahmed Aftab Kola (PES2UG25EC012) — Main menu & Icons
 - Deekshith KP (PES2UG25CS153)— Sound & levels
 - Anish V Naik (PES2UG25CS074)— GUI & documentation
 
-## 📄 License
+##  License
 This project is created for educational purposes.
 
 
