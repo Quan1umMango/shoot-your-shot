@@ -17,14 +17,23 @@ class LevelState(Enum):
     Manages everything realted to a specific level (like collisions, drawing, drawing menus etc)
 """
 class Level:
+<<<<<<< HEAD
 
     def __init__(self,screen,start,end,objs,switchstateonwin=None):
+=======
+    def __init__(self,screen,start,end,objs,switchstateonwin=None,is_premade:bool=False):
+>>>>>>> 9919b4a124b5ca5daf62006054bde66ca476a877
         self.screen = screen
         self.ball_start = start
         self.ball = Ball(self.screen,start[0],start[1])
         self.ball_end = end
         self.objects = objs
+<<<<<<< HEAD
         self.hasplayed_sound=False
+=======
+        self.is_premade = is_premade
+
+>>>>>>> 9919b4a124b5ca5daf62006054bde66ca476a877
         self.state = LevelState.PLAYING
         # This stores the initial and final/current position of the mouse when it was first clicked at the start of every shot
         self.mouse_initial_pos = None

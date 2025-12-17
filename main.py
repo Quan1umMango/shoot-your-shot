@@ -77,7 +77,7 @@ class App:
                 def backtomenu():
                     self.state = AppState.Menu
                     self.inner = Menu(play,oneditor) 
-                self.inner = LevelOverMenu(self.inner.num_strokes,newlevel,backtomenu)
+                self.inner = LevelOverMenu(self.inner.num_strokes,newlevel,backtomenu,selected_level.type == SelectedLevelType.Premade)
             level.switchstateonwin = onlevelwin
             self.inner = level
             self.state = AppState.Playing
