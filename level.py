@@ -5,6 +5,8 @@ from block import Block
 from enum import Enum
 
 import time
+putt_sound = pygame.mixer.Sound("assets/audio/applause.mp3")
+putt_sound.set_volume(1)
 
 
 class LevelState(Enum): 
@@ -15,13 +17,14 @@ class LevelState(Enum):
     Manages everything realted to a specific level (like collisions, drawing, drawing menus etc)
 """
 class Level:
+
     def __init__(self,screen,start,end,objs,switchstateonwin=None):
         self.screen = screen
         self.ball_start = start
         self.ball = Ball(self.screen,start[0],start[1])
         self.ball_end = end
         self.objects = objs
-
+        self.hasplayed_sound=False
         self.state = LevelState.PLAYING
         # This stores the initial and final/current position of the mouse when it was first clicked at the start of every shot
         self.mouse_initial_pos = None
@@ -37,6 +40,9 @@ class Level:
         self.level_end_anim = 0.0
 
         def onlevelwin():
+            if not self.hasplayed_sound:
+                self.hasplayed_sound=True
+                putt_sound.play()
             self.state = LevelState.WON
             self.ball.rect.x = self.ball_end[0]
             self.ball.rect.y = self.ball_end[1]
@@ -91,6 +97,8 @@ class Level:
 
         ball_rect = self.ball.rect
         if ball_rect.colliderect(end_rect):
+            
+            #this plays applause after the ball goes in the putt
             self.state = LevelState.WON
             self.onlevelwin()
             
