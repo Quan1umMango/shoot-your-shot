@@ -367,12 +367,8 @@ class SelectedLevel:
                     level.from_dict(contents)
                     return level
  
-<<<<<<< HEAD
-
-=======
     def next_level(self):
         return SelectedLevel(SelectedLevelType.Premade,self.val+1)
 
     def is_premade(self):
         return self.type == SelectedLevelType.Premade
->>>>>>> 40c9f98592d6ac5843a2657190f3d7f12df6a504

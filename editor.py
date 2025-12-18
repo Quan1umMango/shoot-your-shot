@@ -201,19 +201,11 @@ class Editor:
         def change_to_tool_3(): self.tool = tools[3]
         def change_to_tool_4(): self.tool = tools[4]
         
-<<<<<<< HEAD
-        buttons.append(UIButton(pygame.Rect(PLAY_SCREEN_W,BUTTON_H,100,BUTTON_H),"start",change_to_tool_0))
-        buttons.append(UIButton(pygame.Rect(PLAY_SCREEN_W+100,BUTTON_H,100,BUTTON_H),"idk",change_to_tool_1))
-        buttons.append(UIButton(pygame.Rect(PLAY_SCREEN_W,BUTTON_H*2,100,BUTTON_H),"idk again",change_to_tool_2))
-        buttons.append(UIButton(pygame.Rect(PLAY_SCREEN_W+100,BUTTON_H*2,100,BUTTON_H),"who knows",change_to_tool_3))
-        buttons.append(UIButton(pygame.Rect(PLAY_SCREEN_W,BUTTON_H*3,100,BUTTON_H),"not me",change_to_tool_4))
-=======
         buttons.append(UIButton(pygame.Rect(PLAY_SCREEN_W+20,100,200,50),"Erase",change_to_tool_0))
         buttons.append(UIButton(pygame.Rect(PLAY_SCREEN_W+20,200,200,50),"Block",change_to_tool_1))
         buttons.append(UIButton(pygame.Rect(PLAY_SCREEN_W+20,300,200,50),"Moving Block",change_to_tool_2))
         buttons.append(UIButton(pygame.Rect(PLAY_SCREEN_W+20,400,200,50),"Hole",change_to_tool_3))
         buttons.append(UIButton(pygame.Rect(PLAY_SCREEN_W+20,500,200,50),"Ball",change_to_tool_4))
->>>>>>> 40c9f98592d6ac5843a2657190f3d7f12df6a504
         
         self.buttons = buttons 
 
