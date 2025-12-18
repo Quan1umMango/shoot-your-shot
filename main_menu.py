@@ -359,7 +359,6 @@ class SelectedLevel:
                     level.from_dict(contents)
                     return level
  
-
     def next_level(self):
         return SelectedLevel(SelectedLevelType.Premade,self.val+1)
 
