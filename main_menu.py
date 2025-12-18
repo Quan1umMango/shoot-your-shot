@@ -57,7 +57,6 @@ class Menu:
                 if self.state == MenuState.Main:
                     running = False
                 else:
-                    print("her")
                     self.state = MenuState.Main 
                 return True
 
@@ -352,10 +351,11 @@ class SelectedLevel:
     def to_level(self):
         match self.type:
             case SelectedLevelType.Premade:
-                idx = self.val-1 if self.val > 0  else 0
+                idx = self.val-1 if self.val > 0  else 0 
                 level_dict = LEVELS_DICTS[idx] 
                 level = LEVEL_0
                 level.from_dict(level_dict)
+                level.level_num = self.val
                 level.is_premade = True
                 return level
             case SelectedLevelType.Custom:
@@ -367,4 +367,12 @@ class SelectedLevel:
                     level.from_dict(contents)
                     return level
  
+<<<<<<< HEAD
 
+=======
+    def next_level(self):
+        return SelectedLevel(SelectedLevelType.Premade,self.val+1)
+
+    def is_premade(self):
+        return self.type == SelectedLevelType.Premade
+>>>>>>> 40c9f98592d6ac5843a2657190f3d7f12df6a504

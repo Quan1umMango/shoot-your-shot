@@ -18,11 +18,15 @@ class LevelState(Enum):
 """
 class Level:
 <<<<<<< HEAD
+<<<<<<< HEAD
 
     def __init__(self,screen,start,end,objs,switchstateonwin=None):
 =======
     def __init__(self,screen,start,end,objs,switchstateonwin=None,is_premade:bool=False):
 >>>>>>> 9919b4a124b5ca5daf62006054bde66ca476a877
+=======
+    def __init__(self,screen,start,end,objs,switchstateonwin=None,is_premade:bool=False,level_num=None):
+>>>>>>> 40c9f98592d6ac5843a2657190f3d7f12df6a504
         self.screen = screen
         self.ball_start = start
         self.ball = Ball(self.screen,start[0],start[1])
@@ -32,6 +36,7 @@ class Level:
         self.hasplayed_sound=False
 =======
         self.is_premade = is_premade
+        self.level_num = level_num
 
 >>>>>>> 9919b4a124b5ca5daf62006054bde66ca476a877
         self.state = LevelState.PLAYING
@@ -76,7 +81,8 @@ class Level:
 
                 dir_ = dir_v.normalize()
                 rect = self.ball.rect
-                o = pygame.math.Vector2(rect.x,rect.y)
+                radius = self.ball.radius
+                o = pygame.math.Vector2(rect.x+radius,rect.y+radius)
                 p1_ = pygame.math.Vector2(BALL_RADIUS,0)
                 p2_ = pygame.math.Vector2(-BALL_RADIUS,0)
                 p3_ = pygame.math.Vector2(0,-BALL_RADIUS) 
