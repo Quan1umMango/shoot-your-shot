@@ -13,7 +13,7 @@
 ## Screenshots
 
 ![Gameplay Screenshot](assets/main_menu.png)
-![Gameplay Screenshot](assets/Editor.jpg)
+![Gameplay Screenshot](assets/IN.jpg)
 
 ## Installation
 Clone this repo using:
@@ -48,7 +48,7 @@ py -m pip install -r requirements.txt
 | `Shift+H` | Decrease Height        |
   
 
-![Gameplay Screenshot](assets/IN.jpg)
+![Gameplay Screenshot](assets/Editor.jpg)
  
 
 
