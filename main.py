@@ -2,17 +2,7 @@ from enum import Enum
 import time
 
 import pygame, os
-pygame.mixer.init()
 pygame.font.init()
-
-# SOUND EFFECTS
-hit_sound = pygame.mixer.Sound("assets/audio/start.wav")
-
-putt_sound = pygame.mixer.Sound("assets/audio/putt.wav")
-
-hit_sound.set_volume(0.7)
-putt_sound.set_volume(0.8)
-
 
 from constants import *
 SCREEN = pygame.display.set_mode((SCREEN_W, SCREEN_H))
@@ -65,7 +55,6 @@ class App:
             self.inner = Editor(SCREEN)
             self.state = AppState.Editor
         def play():
-            hit_sound.stop()
             selected_level = self.inner.selected_level
             level = self.inner.selected_level.to_level()
             def onlevelwin():

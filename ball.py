@@ -15,7 +15,6 @@ class Ball:
         # You may wonder why we represent velocity as a scalar but also have a dir vector component. it just works better this way
         self.dir = pygame.math.Vector2(0,0)
         self.velocity = 0.0 
-        self.collided=False
 
 
         self.radius = BALL_RADIUS
@@ -62,20 +61,16 @@ class Ball:
             if rect_x.colliderect(obj_rect):
                 has_collided = True
                 self.dir.x *= -1
-                bounce_sound.play()
-                self.collided=True         #self.collided is written so that we can avoid multiple repitition of the sound
             # check for y-axis collision:
             if rect_y.colliderect(obj_rect):
                 has_collided = True
                 self.dir.y *= -1
-                bounce_sound.play()
-                self.collided=True
         self.move()
 
     def move(self):
         self.rect.x += self.velocity  * self.dir.x 
         self.rect.y += self.velocity * self.dir.y 
-        self.collided=False
+
         if abs(self.velocity) > 1:
             self.velocity -= FRICTION * -1 if self.velocity < 0 else 1
         else:
@@ -95,8 +90,6 @@ class Ball:
         dir_ = (initial_pos-final_pos).normalize()
         self.velocity = vel * 0.1
         self.dir = dir_
-        print("Hit Sound Triggered")
-        hit_sound.play()
 
     def from_dict(self,dict_):
         self.rect = rect_from_dict(dict_.get('rect'))
