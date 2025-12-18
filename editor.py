@@ -35,10 +35,11 @@ class ObjType(Enum):
     BallStart   = 4,
 
 class Object:
-    def __init__(self,ty:ObjType,x:float,y:float,w:float,h:float,editable:bool):
+    def __init__(self,ty:ObjType,x:float,y:float,w:float,h:float,editable:bool,checkpoints=[]):
         self.rect = pygame.Rect(x,y,w,h)
         self.type = ty
         self.editable = editable 
+        self.checkpoints = checkpoints 
 
     def draw(self,screen):
         match self.type:
@@ -46,24 +47,29 @@ class Object:
                 pygame.draw.rect(screen,BLOCK_COLOR,self.rect) 
             case ObjType.MovingBlock:
                 pygame.draw.rect(screen,BLOCK_COLOR,self.rect) 
+                if len(self.checkpoints) == 0: return 
+                for cur,nex in zip(self.checkpoints,self.checkpoints[1:]):
+                    pygame.draw.line(screen,BLACK,cur,nex)
+                pygame.draw.line(screen,BLACK,self.checkpoints[-1],(self.rect.x,self.rect.y))
             case ObjType.Hole:
                 pygame.draw.circle(screen,HOLE_COLOR,(self.rect.x+HOLE_RADIUS,self.rect.y+HOLE_RADIUS),HOLE_RADIUS)
             case ObjType.BallStart:
                 pygame.draw.circle(screen,BALL_COLOR,(self.rect.x+BALL_RADIUS,self.rect.y+BALL_RADIUS),BALL_RADIUS)
-
+        
 class ToolType(Enum):
     Object = 1,
     Eraser = 2
 
 class Tool():
-    def __init__(self,ttype:ToolType,extra:ObjType = None):
+    def __init__(self,ttype:ToolType,obj_type:ObjType = None):
         self.type = ttype
-        self.extra = extra
+        self.obj_type = obj_type
+        # this will be used only when it is a moving block
         self.checkpoints = []
         
         if ttype == ToolType.Object:
-            assert extra != None, "Cannot have extra be None when given type is not ToolType.Object"
-            match extra:
+            assert obj_type != None, "Cannot have obj_type be None when given type is not ToolType.Object"
+            match obj_type:
                 case ObjType.StaticBlock | ObjType.MovingBlock:
                     dims = BORDER_SIZE,BORDER_SIZE
                 case ObjType.Hole:
@@ -88,9 +94,9 @@ class Tool():
             if rect.colliderect(obj.rect):
                 is_ok = False
                 break
-        if self.type == ToolType.Object and (self.extra == ObjType.Hole or self.extra == ObjType.BallStart):
+        if self.type == ToolType.Object and (self.obj_type == ObjType.Hole or self.obj_type == ObjType.BallStart):
             for obj in objs:
-                if obj.type == self.extra:
+                if obj.type == self.obj_type:
                     is_ok = False
                     break
             
@@ -98,13 +104,29 @@ class Tool():
         
 
     def use(self,objects):
+
         if self.type == ToolType.Eraser:
             self.use_eraser(objects)
             return
 
         if not self.is_ok: return
+
+        if self.type == ToolType.Object and self.obj_type == ObjType.MovingBlock:
+            if not pygame.key.get_pressed()[pygame.K_RETURN]:
+                # if we want to add checkpoints to the current moving block
+                rect = self.rect
+                self.checkpoints.append(pygame.math.Vector2(rect.x,rect.y))
+                return 
+            else:
+                if len(self.checkpoints) == 0: return
+                pos = self.checkpoints[0]
+                obj = Object(ObjType.MovingBlock,pos.x,pos.y,self.rect.w,self.rect.h,True,self.checkpoints)
+                objects.append(obj)
+                self.checkpoints = []
+                return
+
         rect = self.rect
-        obj = Object(self.extra,rect.x,rect.y,rect.w,rect.h,True)
+        obj = Object(self.obj_type,rect.x,rect.y,rect.w,rect.h,True,self.checkpoints)
         objects.append(obj)
 
     def use_eraser(self,objects):
@@ -132,7 +154,7 @@ class Tool():
 
             return 
 
-        match self.extra:
+        match self.obj_type:
             case ObjType.StaticBlock:
                color = BLOCK_COLOR if self.is_ok else RED
                pygame.draw.rect(screen,color,self.rect)  
@@ -141,6 +163,12 @@ class Tool():
                color = BLOCK_COLOR if self.is_ok else RED
                pygame.draw.rect(screen,color,self.rect,border_radius=10)
                pygame.draw.rect(screen,BLACK,self.rect,5,border_radius=10)  
+
+               if len(self.checkpoints) != 0:
+                    for cur,nex in zip(self.checkpoints,self.checkpoints[1:]):
+                        pygame.draw.line(screen,BLACK,cur,nex)
+                    pygame.draw.line(screen,BLACK,self.checkpoints[-1],(self.rect.x,self.rect.y))
+
             case ObjType.Hole:
                color = HOLE_COLOR if self.is_ok else RED
                pygame.draw.circle(screen,color,(self.rect.x+HOLE_RADIUS,self.rect.y+HOLE_RADIUS),HOLE_RADIUS)
@@ -201,19 +229,11 @@ class Editor:
         def change_to_tool_3(): self.tool = tools[3]
         def change_to_tool_4(): self.tool = tools[4]
         
-<<<<<<< HEAD
-        buttons.append(UIButton(pygame.Rect(PLAY_SCREEN_W,BUTTON_H,100,BUTTON_H),"start",change_to_tool_0))
-        buttons.append(UIButton(pygame.Rect(PLAY_SCREEN_W+100,BUTTON_H,100,BUTTON_H),"idk",change_to_tool_1))
-        buttons.append(UIButton(pygame.Rect(PLAY_SCREEN_W,BUTTON_H*2,100,BUTTON_H),"idk again",change_to_tool_2))
-        buttons.append(UIButton(pygame.Rect(PLAY_SCREEN_W+100,BUTTON_H*2,100,BUTTON_H),"who knows",change_to_tool_3))
-        buttons.append(UIButton(pygame.Rect(PLAY_SCREEN_W,BUTTON_H*3,100,BUTTON_H),"not me",change_to_tool_4))
-=======
         buttons.append(UIButton(pygame.Rect(PLAY_SCREEN_W+20,100,200,50),"Erase",change_to_tool_0))
         buttons.append(UIButton(pygame.Rect(PLAY_SCREEN_W+20,200,200,50),"Block",change_to_tool_1))
         buttons.append(UIButton(pygame.Rect(PLAY_SCREEN_W+20,300,200,50),"Moving Block",change_to_tool_2))
         buttons.append(UIButton(pygame.Rect(PLAY_SCREEN_W+20,400,200,50),"Hole",change_to_tool_3))
         buttons.append(UIButton(pygame.Rect(PLAY_SCREEN_W+20,500,200,50),"Ball",change_to_tool_4))
->>>>>>> 40c9f98592d6ac5843a2657190f3d7f12df6a504
         
         self.buttons = buttons 
 
@@ -236,11 +256,15 @@ class Editor:
         return True
 
     def save_as(self):
+
+        level = self.into_level()
+        if not level: return False
+
         import filedialpy
+        import json
+
         self.file_name =  filedialpy.saveFile()
         if not self.file_name: return False
-        import json
-        level = self.into_level()
         with open(self.file_name,'w') as f:
             json.dump(level.to_dict(),f)
         return True
@@ -284,7 +308,7 @@ class Editor:
                 self.tool = Tool(ToolType.Eraser)
                 return True
 
-        if event.type == pygame.MOUSEBUTTONDOWN or pygame.mouse.get_pressed()[0]:
+        if event.type == pygame.MOUSEBUTTONDOWN or pygame.mouse.get_pressed()[0] or keys[pygame.K_RETURN]:
             self.redo_buf = []
             self.tool.use(self.objects)
             return True
@@ -324,8 +348,7 @@ class Editor:
                 b = block.StaticBlock(rect.x,rect.y,rect.w,rect.h)
             if obj.type == ObjType.MovingBlock:
                 rect = obj.rect
-                b = block.MovingBlock(rect.x,rect.y,rect.w,rect.h,None,[])
-
+                b = block.MovingBlock(rect.x,rect.y,rect.w,rect.h,2,obj.checkpoints)
             objs.append(block.Block(None,b))
         return level.Level(None,ball_start,ball_end,objs) 
 
@@ -354,10 +377,6 @@ def main():
     clock = pygame.time.Clock()
     running = True
     editor = Editor(screen)
-    btn = UIButton(pygame.Rect(250,250,100,100),"Hello!")
-    def onclicked():
-        print("you clciedk the button")
-    btn.onclicked = onclicked
     while running:
         time_delta = clock.tick(FPS)/1000
         for event in pygame.event.get():
@@ -369,7 +388,6 @@ def main():
         editor.update()
         screen.fill(BG_COLOR)
         editor.draw()
-        btn.draw(screen)
         pygame.display.flip()
     pygame.quit()
 

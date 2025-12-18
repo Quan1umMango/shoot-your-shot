@@ -17,7 +17,7 @@ def rect_to_dict(rect):
     return d
 
 def vector2_from_dict(dict_) -> pygame.math.Vector2:
-    v = pygame.math.Vector2(0,0,0,0)
+    v = pygame.math.Vector2(0,0)
     if dict_ is None: return v
     v.x = dict_.get('x') or 0
     v.y = dict_.get('y') or 0

@@ -74,7 +74,7 @@ class Block:
         inner = dict_.get('inner')
         if inner.get('checkpoints') or inner.get('current_checkpoint') or inner.get('speed'):
             self.inner = MovingBlock(0,0,0,0,0,[])
-            self.inner.from_dict(inner['rect'])
+            self.inner.from_dict(inner)
         else:
             self.inner = StaticBlock(0,0,0,0)
             self.inner.from_dict(inner)
