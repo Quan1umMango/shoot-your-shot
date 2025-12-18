@@ -2,17 +2,7 @@ from enum import Enum
 import time
 
 import pygame, os
-pygame.mixer.init()
 pygame.font.init()
-
-# SOUND EFFECTS
-hit_sound = pygame.mixer.Sound("assets/audio/start.wav")
-
-putt_sound = pygame.mixer.Sound("assets/audio/putt.wav")
-
-hit_sound.set_volume(0.7)
-putt_sound.set_volume(0.8)
-
 
 from constants import *
 SCREEN = pygame.display.set_mode((SCREEN_W, SCREEN_H))
@@ -65,19 +55,19 @@ class App:
             self.inner = Editor(SCREEN)
             self.state = AppState.Editor
         def play():
-            hit_sound.stop()
             selected_level = self.inner.selected_level
             level = self.inner.selected_level.to_level()
             def onlevelwin():
                 self.state = AppState.LevelWon
                 def newlevel():
                     from main_menu import SelectedLevelType, SelectedLevel
-                    self.inner = SelectedLevel(SelectedLevelType.Premade,selected_level.val+1).to_level()
+                    level_num = self.inner.next_level_num or 0
+                    self.inner = SelectedLevel(SelectedLevelType.Premade,level_num).to_level()
                     self.inner.switchstateonwin = onlevelwin
                 def backtomenu():
                     self.state = AppState.Menu
                     self.inner = Menu(play,oneditor) 
-                self.inner = LevelOverMenu(self.inner.num_strokes,newlevel,backtomenu,selected_level.type == SelectedLevelType.Premade)
+                self.inner = LevelOverMenu(selected_level,self.inner.num_strokes,newlevel,backtomenu,self.inner.level_num+1)
             level.switchstateonwin = onlevelwin
             self.inner = level
             self.state = AppState.Playing
