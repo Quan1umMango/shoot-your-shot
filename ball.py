@@ -1,6 +1,10 @@
 import pygame
 from serde import *
 from constants import *
+hit_sound = pygame.mixer.Sound("assets/audio/hit.wav")
+hit_sound.set_volume(0.7)
+bounce_sound=pygame.mixer.Sound("assets/audio/collisions.mp3")
+bounce_sound.set_volume(1.5)
 
 from debug import is_debug
 
