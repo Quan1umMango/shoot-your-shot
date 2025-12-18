@@ -13,7 +13,7 @@
 ## Screenshots
 
 ![Gameplay Screenshot](assets/main_menu.png)
-![Gameplay Screenshot](assets/11111222.jpg)
+![Gameplay Screenshot](assets/IN.jpg)
 
 ## Installation
 Clone this repo using:
