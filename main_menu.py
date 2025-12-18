@@ -4,6 +4,7 @@ from level import Level
 from ui_misc import *
 from main import SCREEN,CLOCK,LEVEL_0
 
+hit_sound = pygame.mixer.Sound("assets/audio/start.wav")
 from math import sin
 from enum import Enum
 
@@ -20,6 +21,7 @@ class Menu:
         self.selected_level = SelectedLevel(SelectedLevelType.Premade,0)
         self.settings = {"music": True, "sfx": True}
         self.ui_drawn = None
+        hit_sound.play()
 
         self.hover_state = {"play": 0.0, "editor": 0.0, "settings": 0.0}
         self.settings_anim = {"music": 0.0, "sfx": 0.0}
@@ -85,7 +87,14 @@ class Menu:
                     music_pill = toggles["music"]["pill"]
                     if music_box.collidepoint(pos) or music_pill.collidepoint(pos):
                         self.settings["music"] = not self.settings.get("music", True)
+                        if self.settings["music"]:
+                             pygame.mixer.music.set_volume(0.6)   # Music will play
+                             pygame.mixer.music.unpause()
+                        else:
+                            pygame.mixer.music.pause()           # Music off
                         return True
+                    
+                    
                     # Toggle SFX similarly
                     sfx_box = toggles["sfx"]["box"]
                     sfx_pill = toggles["sfx"]["pill"]
