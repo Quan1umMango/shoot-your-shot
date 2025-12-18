@@ -48,7 +48,7 @@ py -m pip install -r requirements.txt
 | `Shift+H` | Decrease Height        |
   
 
-![Gameplay Screenshot](assets/Editor.jpg)
+![Gameplay Screenshot](assets/Editor.png)
  
 
 
