@@ -2,6 +2,12 @@ import pygame
 from serde import *
 from constants import *
 
+hit_sound = pygame.mixer.Sound("assets/audio/hit.wav")
+hit_sound.set_volume(0.7)
+bounce_sound=pygame.mixer.Sound("assets/audio/collisions.mp3")
+bounce_sound.set_volume(1.5)
+
+
 from debug import is_debug
 
 class Ball:
@@ -11,6 +17,7 @@ class Ball:
         # You may wonder why we represent velocity as a scalar but also have a dir vector component. it just works better this way
         self.dir = pygame.math.Vector2(0,0)
         self.velocity = 0.0 
+        self.collided=False
 
 
         self.radius = BALL_RADIUS
@@ -56,10 +63,12 @@ class Ball:
             # check for x-axis collision:
             if rect_x.colliderect(obj_rect):
                 has_collided = True
+                bounce_sound.play()
                 self.dir.x *= -1
-            # check for y-axis collision:
+            # check for y-axis collision
             if rect_y.colliderect(obj_rect):
                 has_collided = True
+                bounce_sound.play()
                 self.dir.y *= -1
         self.move()
 
@@ -86,6 +95,7 @@ class Ball:
         dir_ = (initial_pos-final_pos).normalize()
         self.velocity = vel * 0.1
         self.dir = dir_
+        hit_sound.play()
 
     def from_dict(self,dict_):
         self.rect = rect_from_dict(dict_.get('rect'))

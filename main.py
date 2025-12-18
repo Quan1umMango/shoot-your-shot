@@ -3,6 +3,16 @@ import time
 
 import pygame, os
 pygame.font.init()
+pygame.mixer.init()
+
+# SOUND EFFECTS
+hit_sound = pygame.mixer.Sound("assets/audio/start.wav")
+
+putt_sound = pygame.mixer.Sound("assets/audio/putt.wav")
+
+hit_sound.set_volume(0.7)
+hit_sound.delay(2999)
+putt_sound.set_volume(0.8)
 
 from constants import *
 SCREEN = pygame.display.set_mode((SCREEN_W, SCREEN_H))

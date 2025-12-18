@@ -7,6 +7,8 @@ from main import SCREEN,CLOCK,LEVEL_0
 from math import sin
 from enum import Enum
 
+hit_sound = pygame.mixer.Sound("assets/audio/start.wav")
+
 class MenuState(Enum):
     Intro = 1,
     Main = 2,
@@ -23,6 +25,8 @@ class Menu:
 
         self.hover_state = {"play": 0.0, "editor": 0.0, "settings": 0.0}
         self.settings_anim = {"music": 0.0, "sfx": 0.0}
+
+        hit_sound.play()
 
         self.intro_start_time = pygame.time.get_ticks() / 1000.0
         self.onplaybuttonclicked = onplaybuttonclicked
@@ -67,6 +71,7 @@ class Menu:
                     editor_r = get_inflated_drawn(self.ui_drawn, "editor")
                     settings_r = get_inflated_drawn(self.ui_drawn, "settings")
                     if play_r.collidepoint(pos):
+
                         self.state = MenuState.Levels
                         return True
                     elif editor_r.collidepoint(pos):
@@ -84,6 +89,11 @@ class Menu:
                     music_box = toggles["music"]["box"]
                     music_pill = toggles["music"]["pill"]
                     if music_box.collidepoint(pos) or music_pill.collidepoint(pos):
+
+                        if self.settings['music']: 
+                            hit_sound.stop()
+                        else:
+                            hit_sound.play()
                         self.settings["music"] = not self.settings.get("music", True)
                         return True
                     # Toggle SFX similarly
@@ -99,11 +109,13 @@ class Menu:
                         return True
                                                 
                 elif self.state == MenuState.Levels:
+
                     levels = self.ui_drawn["levels"]
                     for lvl, r in levels.items():
                         if r.collidepoint(pos):
                             self.selected_level = SelectedLevel(SelectedLevelType.Premade,lvl) 
-                            
+                              
+                            hit_sound.stop()
                             if self.onplaybuttonclicked: self.onplaybuttonclicked()
 
                             return True
@@ -113,6 +125,8 @@ class Menu:
                         if not file: return True
                         self.selected_level = SelectedLevel(SelectedLevelType.Custom,file)
 
+
+                        hit_sound.stop()
                         if self.onplaybuttonclicked: self.onplaybuttonclicked()
 
                     if self.ui_drawn["back"].collidepoint(pos):
